@@ -32,32 +32,33 @@ with role-based access for personal and team workspaces.
 | Styling | Tailwind CSS, Shadcn UI |
 | ORM | Prisma |
 | Database | PostgreSQL (Supabase or Neon) |
-| Auth | NextAuth.js (or Clerk) — GitHub + Google OAuth |
+| Auth | Auth.js v5 (NextAuth.js) — GitHub + Google OAuth (Clerk alternative) |
 | Hosting | Vercel (app) + Supabase/Neon (DB) |
+| Package manager | pnpm |
 
 ## 4. Architecture (High-Level)
 
 - **React Server Components (RSC)** for data-fetching pages; minimal client JS.
 - **Server Actions** for mutations (create/update/delete snippets) with optimistic UI.
 - **Prisma ORM** as the data access layer over PostgreSQL.
-- **RBAC** via Next.js middleware + DB roles for route/feature gating.
+- **RBAC** via Next.js middleware (cookie-presence check only — it does **NOT** block `PUBLIC` collection read routes) + authoritative checks in RSC/Server Actions via `auth()` + `lib/rbac.ts` (which still gate all mutations and `PRIVATE`/`TEAM` access).
 - **Relational schema** with normalized tables and indexed lookups for search.
 
 ## 5. Data Model (entities)
 
-- **User** — id, email, name, avatar, role (`USER` | `ADMIN`), oauth accounts
+- **User** — id, email, name, image, role (`USER` | `ADMIN`), oauth accounts
 - **Snippet** — id, title, code, language, description, ownerId, collectionId, createdAt, updatedAt
 - **Tag** — id, name (unique)
 - **SnippetTag** — join (snippetId, tagId)
-- **Collection** — id, name, ownerId, visibility (`PRIVATE` | `PUBLIC` | `TEAM`)
-- **Membership** — (userId, collectionId, role) for shared collections
+- **Collection** — id, name, ownerId, visibility (`PRIVATE` | `PUBLIC` | `TEAM`); `PUBLIC` = viewable by unauthenticated users, `PRIVATE`/`TEAM` = require auth + membership.
+- **Membership** — (userId, collectionId, role: `MembershipRole` — VIEWER | EDITOR | ADMIN) for shared collections
 
 ## 6. MVP Feature Scope
 
 1. OAuth sign-in (GitHub + Google)
 2. Create / edit / delete snippets with syntax highlighting
 3. Tagging engine + live search (title, code, tags)
-4. Collections (group snippets) with visibility controls
+4. Collections (group snippets) with visibility controls — `PUBLIC` collections are readable by **anyone, including unauthenticated (anonymous) visitors**; `PRIVATE`/`TEAM` collections remain auth-gated (require a session + membership).
 5. RBAC: owner / admin / member permissions
 6. Dark mode, responsive, a11y, OpenGraph metadata
 
@@ -69,7 +70,7 @@ with role-based access for personal and team workspaces.
 - [ ] Provision Postgres (Supabase/Neon), run first migration
 
 ### Phase 1 — Authentication & RBAC
-- [ ] NextAuth/Clerk integration (GitHub + Google OAuth)
+- [ ] Auth.js v5 (NextAuth) / Clerk integration (GitHub + Google OAuth)
 - [ ] Role model + middleware (RBAC) for protected routes
 - [ ] Session handling in RSC
 
@@ -85,7 +86,7 @@ with role-based access for personal and team workspaces.
 
 ### Phase 4 — Polish & Ship
 - [ ] a11y audit, Core Web Vitals, OpenGraph metadata, dark mode
-- [ ] Deploy to Vercel + managed Postgres
+- [ ] Deploy to Vercel + managed Postgres (prod migrations via `prisma migrate deploy`)
 - [ ] Write retro
 
 ## 8. Folder Structure (proposed)
@@ -103,7 +104,7 @@ DCodeBook/
 ## 9. Risks & Open Decisions
 
 - **RSC vs client boundaries** — keep interactivity islands small; default to server.
-- **Auth provider** — NextAuth (flexible, self-hosted) vs Clerk (faster, hosted). Decide in Phase 1.
+- **Auth provider** — Auth.js v5 (NextAuth.js) (flexible, self-hosted) vs Clerk (faster, hosted). Decide in Phase 1.
 - **Search at scale** — start with Postgres `ILIKE` + indexes; defer full-text / Algolia.
 
 ## 10. Definition of Done (MVP)
