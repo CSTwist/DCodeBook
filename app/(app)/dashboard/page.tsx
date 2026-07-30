@@ -46,10 +46,10 @@ export default async function DashboardPage() {
     }),
   ]);
 
-  const tagIds = popularTagAgg.map((t) => t.tagId);
+  const tagIds = popularTagAgg.map((t: { tagId: string }) => t.tagId);
   const tagRecords = await prisma.tag.findMany({ where: { id: { in: tagIds } } });
   const popularTags = popularTagAgg
-    .map((agg) => {
+    .map((agg: { tagId: string; _count: { tagId: number } }) => {
       const tag = tagRecords.find((t) => t.id === agg.tagId);
       return tag ? { id: tag.id, name: tag.name, count: agg._count.tagId } : null;
     })
@@ -221,7 +221,7 @@ export default async function DashboardPage() {
           />
         ) : (
           <div className="space-y-2">
-            {recentSnippets.map((snippet) => (
+            {recentSnippets.map((snippet: { id: string; title: string; language: string; tags: Array<{ tag: { id: string; name: string } }> }) => (
               <Link key={snippet.id} href={`/snippets/${snippet.id}`}>
                 <Card className="transition-colors hover:bg-muted/50">
                   <CardContent className="flex items-center justify-between py-3">

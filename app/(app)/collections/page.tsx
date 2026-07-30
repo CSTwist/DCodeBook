@@ -33,7 +33,7 @@ export default async function CollectionsPage() {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {collections.map((col) => (
+          {collections.map((col: { id: string; name: string; visibility: "PUBLIC" | "PRIVATE" | "TEAM"; _count: { snippets: number } }) => (
             <Link key={col.id} href={`/collections/${col.id}`}>
               <Card className="h-full transition-colors hover:bg-muted/50">
                 <CardHeader>

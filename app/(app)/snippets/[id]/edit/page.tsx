@@ -52,7 +52,7 @@ export default async function EditSnippetPage({ params }: Props) {
           code: snippet.code,
           language: snippet.language,
           collectionId: snippet.collectionId,
-          tags: snippet.tags.map((t) => ({ tag: { name: t.tag.name } })),
+          tags: snippet.tags.map((t: { tag: { name: string } }) => ({ tag: { name: t.tag.name } })),
         }}
         collections={collections}
         allTags={allTags}

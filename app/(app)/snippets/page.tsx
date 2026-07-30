@@ -71,7 +71,7 @@ export default async function SnippetsPage({ searchParams }: Props) {
     orderBy: { _count: { language: "desc" } },
   });
   const languages = languageGroups
-    .map((g) => g.language)
+    .map((g: { language: string }) => g.language)
     .filter((l): l is string => Boolean(l));
 
   const [totalSnippets, snippets, tags] = await Promise.all([
@@ -177,7 +177,7 @@ export default async function SnippetsPage({ searchParams }: Props) {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {snippets.map((snippet) => (
+            {snippets.map((snippet: { id: string; title: string; language: string; description: string | null; code: string | null; ownerId: string; tags: Array<{ tag: { id: string; name: string } }> }) => (
               <div key={snippet.id} className="relative group">
                 <Link href={`/snippets/${snippet.id}`} className="block h-full">
                   <Card className="h-full transition-colors hover:bg-muted/50">

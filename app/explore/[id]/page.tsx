@@ -61,7 +61,7 @@ export default async function ExploreCollectionPage({ params }: Props) {
   if (!collection) notFound();
 
   const previews = await Promise.all(
-    collection.snippets.map(async (snippet) => ({
+    collection.snippets.map(async (snippet: { id: string; title: string; code: string; language: string; description: string | null; tags: Array<{ tag: { id: string; name: string } }> }) => ({
       snippet,
       html: await highlight(snippet.code.slice(0, 500), snippet.language, true),
     }))
