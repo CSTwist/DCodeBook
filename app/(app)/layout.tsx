@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { Sidebar } from "@/components/sidebar";
+import { MobileNav } from "@/components/mobile-nav";
+import { CommandPalette } from "@/components/command-palette";
+import { KeyboardProvider } from "@/components/keyboard-provider";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
@@ -30,6 +33,7 @@ export default async function AppLayout({
             <BookOpen className="h-5 w-5" />
             DCodeBook
           </Link>
+          <MobileNav />
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <UserMenu user={session.user} />
@@ -37,6 +41,8 @@ export default async function AppLayout({
         </header>
         <main id="main" className="flex-1 px-6 py-6">{children}</main>
       </div>
+      <CommandPalette />
+      <KeyboardProvider />
       <Toaster />
     </div>
   );

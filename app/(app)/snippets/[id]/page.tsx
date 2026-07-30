@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { highlight } from "@/lib/highlight";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CodeBlock } from "@/components/code-block";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pencil, ArrowLeft } from "lucide-react";
@@ -37,12 +40,27 @@ export default async function SnippetPage({ params }: Props) {
   if (!snippet) notFound();
   if (snippet.ownerId !== session?.user?.id) notFound();
 
-  const html = await highlight(snippet.code, snippet.language, false);
+  const cookieStore = await cookies();
+  const themeCookie = cookieStore.get("theme")?.value;
+  const dark = themeCookie === "dark" || (!themeCookie && true); // default dark
+
+  const html = await highlight(snippet.code, snippet.language, dark);
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs
+        items={[
+          { label: "Snippets", href: "/snippets" },
+          { label: snippet.title },
+        ]}
+      />
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" render={<Link href="/snippets" />}>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Back to snippets"
+          render={<Link href="/snippets" />}
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
@@ -53,7 +71,12 @@ export default async function SnippetPage({ params }: Props) {
           </div>
         </div>
         {snippet.ownerId === session?.user?.id && (
-          <Button variant="outline" size="sm" render={<Link href={`/snippets/${snippet.id}/edit`} />}>
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label="Edit snippet"
+            render={<Link href={`/snippets/${snippet.id}/edit`} />}
+          >
             <Pencil className="mr-2 h-4 w-4" />Edit
           </Button>
         )}
@@ -68,7 +91,11 @@ export default async function SnippetPage({ params }: Props) {
           Collection: <Link href={`/collections/${snippet.collection.id}`} className="underline underline-offset-2 hover:text-foreground">{snippet.collection.name}</Link>
         </p>
       )}
-      <div className="overflow-x-auto rounded-lg border bg-[#0d1117] p-4" dangerouslySetInnerHTML={{ __html: html }} />
+      <CodeBlock
+        code={snippet.code}
+        html={html}
+        className="overflow-x-auto rounded-lg border bg-zinc-50 p-4 dark:bg-zinc-950"
+      />
     </div>
   );
 }

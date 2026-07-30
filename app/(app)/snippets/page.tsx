@@ -2,30 +2,51 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getPopularTags } from "@/lib/tags";
 import { SearchBox } from "@/components/search-box";
+import { SnippetFilters } from "@/components/snippet-filters";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DeleteSnippetButton } from "@/components/delete-snippet-button";
+import { EmptyState } from "@/components/empty-state";
 import Link from "next/link";
-import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, ChevronLeft, ChevronRight, Code2 } from "lucide-react";
 
 interface Props {
-  searchParams: Promise<{ q?: string; tag?: string; page?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    tag?: string;
+    page?: string;
+    sort?: string;
+    language?: string;
+    loadMore?: string;
+  }>;
 }
 
 export default async function SnippetsPage({ searchParams }: Props) {
   const session = await auth();
   if (!session?.user) return null;
 
-  const { q, tag, page } = await searchParams;
+  const { q, tag, page, sort, language, loadMore } = await searchParams;
   const userId = session.user.id;
 
   const currentPage = Math.max(1, parseInt(page || "1", 10) || 1);
   const pageSize = 12;
+  const loadMoreCount = Math.max(1, parseInt(loadMore || "1", 10) || 1);
   const skip = (currentPage - 1) * pageSize;
+  const take = pageSize * loadMoreCount;
+
+  const orderBy =
+    sort === "updated_asc"
+      ? { updatedAt: "asc" as const }
+      : sort === "title_asc"
+        ? { title: "asc" as const }
+        : sort === "title_desc"
+          ? { title: "desc" as const }
+          : { updatedAt: "desc" as const };
 
   const whereClause = {
     ownerId: userId,
+    ...(language ? { language } : {}),
     ...(tag ? { tags: { some: { tag: { name: tag } } } } : {}),
     ...(q
       ? {
@@ -44,14 +65,31 @@ export default async function SnippetsPage({ searchParams }: Props) {
       : {}),
   };
 
+  const languageGroups = await prisma.snippet.groupBy({
+    by: ["language"],
+    where: { ownerId: userId },
+    orderBy: { _count: { language: "desc" } },
+  });
+  const languages = languageGroups
+    .map((g) => g.language)
+    .filter((l): l is string => Boolean(l));
+
   const [totalSnippets, snippets, tags] = await Promise.all([
     prisma.snippet.count({ where: whereClause }),
     prisma.snippet.findMany({
       where: whereClause,
-      include: { tags: { include: { tag: true } } },
-      orderBy: { updatedAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        language: true,
+        code: true,
+        ownerId: true,
+        tags: { include: { tag: true } },
+      },
+      orderBy,
       skip,
-      take: pageSize,
+      take,
     }),
     getPopularTags(userId),
   ]);
@@ -62,7 +100,21 @@ export default async function SnippetsPage({ searchParams }: Props) {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (tag) params.set("tag", tag);
+    if (sort && sort !== "updated_desc") params.set("sort", sort);
+    if (language) params.set("language", language);
     if (p > 1) params.set("page", String(p));
+    const queryString = params.toString();
+    return `/snippets${queryString ? `?${queryString}` : ""}`;
+  }
+
+  function getLoadMoreUrl() {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (tag) params.set("tag", tag);
+    if (sort && sort !== "updated_desc") params.set("sort", sort);
+    if (language) params.set("language", language);
+    if (page && page !== "1") params.set("page", page);
+    params.set("loadMore", String(loadMoreCount + 1));
     const queryString = params.toString();
     return `/snippets${queryString ? `?${queryString}` : ""}`;
   }
@@ -104,14 +156,24 @@ export default async function SnippetsPage({ searchParams }: Props) {
         )}
       </div>
 
+      <SnippetFilters
+        sort={sort ?? "updated_desc"}
+        language={language}
+        languages={languages}
+      />
+
       {snippets.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            {q
+        <EmptyState
+          icon={Code2}
+          title={q ? "No matches" : "No snippets yet"}
+          description={
+            q
               ? `No snippets matching "${q}"`
-              : "No snippets yet. Create your first one!"}
-          </CardContent>
-        </Card>
+              : "Organize your code — create your first snippet."
+          }
+          actionLabel={q ? undefined : "New Snippet"}
+          actionHref={q ? undefined : "/snippets/new"}
+        />
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -138,6 +200,11 @@ export default async function SnippetsPage({ searchParams }: Props) {
                           ))}
                         </div>
                       )}
+                      {snippet.code && snippet.code.trim().length > 0 && (
+                        <pre className="mt-2 overflow-hidden rounded bg-muted p-2 text-xs text-muted-foreground line-clamp-3">
+                          {snippet.code.slice(0, 200)}
+                        </pre>
+                      )}
                     </CardContent>
                   </Card>
                 </Link>
@@ -153,7 +220,7 @@ export default async function SnippetsPage({ searchParams }: Props) {
           {totalPages > 1 && (
             <div className="flex items-center justify-between border-t pt-4">
               <p className="text-sm text-muted-foreground">
-                Showing {skip + 1} to {Math.min(skip + pageSize, totalSnippets)} of{" "}
+                Showing {skip + 1} to {Math.min(skip + take, totalSnippets)} of{" "}
                 {totalSnippets} snippets
               </p>
               <div className="flex items-center gap-2">
@@ -193,6 +260,18 @@ export default async function SnippetsPage({ searchParams }: Props) {
                   </Button>
                 )}
               </div>
+            </div>
+          )}
+
+          {totalSnippets > skip + take && (
+            <div className="flex justify-center border-t pt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                render={<Link href={getLoadMoreUrl()} />}
+              >
+                Load more
+              </Button>
             </div>
           )}
         </>
