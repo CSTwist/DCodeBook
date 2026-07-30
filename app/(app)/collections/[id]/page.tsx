@@ -130,7 +130,7 @@ export default async function CollectionPage({ params }: Props) {
           </Card>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {collection.snippets.map((snippet) => (
+            {collection.snippets.map((snippet: { id: string; title: string; language: string; description: string | null; tags: Array<{ tag: { id: string; name: string } }> }) => (
               <Link key={snippet.id} href={`/snippets/${snippet.id}`}>
                 <Card className="h-full transition-colors hover:bg-muted/50">
                   <CardHeader>
