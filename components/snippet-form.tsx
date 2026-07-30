@@ -18,6 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { CodeEditor } from "@/components/code-editor";
+import { TagInput } from "@/components/tag-input";
 import {
   Select,
   SelectContent,
@@ -69,9 +71,16 @@ interface SnippetProp {
 interface SnippetFormProps {
   snippet?: SnippetProp;
   collections?: { id: string; name: string }[];
+  allTags?: { id: string; name: string }[];
+  defaultCollectionId?: string;
 }
 
-export function SnippetForm({ snippet, collections = [] }: SnippetFormProps) {
+export function SnippetForm({
+  snippet,
+  collections = [],
+  allTags = [],
+  defaultCollectionId,
+}: SnippetFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -85,7 +94,7 @@ export function SnippetForm({ snippet, collections = [] }: SnippetFormProps) {
       code: snippet?.code ?? "",
       language: snippet?.language ?? "typescript",
       tags: defaultTags,
-      collectionId: snippet?.collectionId ?? "",
+      collectionId: snippet?.collectionId ?? defaultCollectionId ?? "",
     },
   });
 
@@ -227,7 +236,11 @@ export function SnippetForm({ snippet, collections = [] }: SnippetFormProps) {
           <FormItem>
             <FormLabel>Tags</FormLabel>
             <FormControl>
-              <Input placeholder="react, typescript, ui (comma separated)" {...field} />
+              <TagInput
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                existingTags={allTags}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -241,10 +254,11 @@ export function SnippetForm({ snippet, collections = [] }: SnippetFormProps) {
           <FormItem>
             <FormLabel>Code</FormLabel>
             <FormControl>
-              <Textarea
+              <CodeEditor
+                value={field.value as string}
+                onChange={field.onChange}
                 placeholder="// Write your code here..."
                 className="font-mono min-h-[240px]"
-                {...field}
               />
             </FormControl>
             <FormMessage />

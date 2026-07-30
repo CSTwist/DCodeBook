@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { listVisibleCollections } from "@/lib/collections";
 import { VisibilityBadge } from "@/components/visibility-badge";
+import { EmptyState } from "@/components/empty-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NewCollectionDialog } from "@/components/new-collection-dialog";
 import Link from "next/link";
@@ -25,11 +26,11 @@ export default async function CollectionsPage() {
       </div>
 
       {collections.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            No collections yet.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={FolderOpen}
+          title="No collections yet"
+          description="Group your snippets into collections."
+        />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {collections.map((col) => (

@@ -144,6 +144,7 @@ export function CollectionMembers({
                       size="icon-xs"
                       onClick={() => handleRemoveMember(m.user.id)}
                       disabled={isPending}
+                      aria-label={`Remove ${m.user.name || m.user.email}`}
                     >
                       <Trash2 className="h-3.5 w-3.5 text-destructive" />
                     </Button>

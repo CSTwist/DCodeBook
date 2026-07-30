@@ -2,8 +2,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
+import { getPopularTags } from "@/lib/tags";
 import { SnippetForm } from "@/components/snippet-form";
 import { Button } from "@/components/ui/button";
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ArrowLeft } from "lucide-react";
 
 interface Props { params: Promise<{ id: string }> }
@@ -22,10 +24,23 @@ export default async function EditSnippetPage({ params }: Props) {
     where: { ownerId: session.user.id },
     select: { id: true, name: true },
   });
+  const allTags = await getPopularTags(session.user.id);
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <Button variant="ghost" size="icon" render={<Link href="/snippets" />}>
+      <Breadcrumbs
+        items={[
+          { label: "Snippets", href: "/snippets" },
+          { label: snippet.title, href: `/snippets/${snippet.id}` },
+          { label: "Edit" },
+        ]}
+      />
+      <Button
+        variant="ghost"
+        size="icon"
+        aria-label="Back to snippets"
+        render={<Link href="/snippets" />}
+      >
         <ArrowLeft className="h-4 w-4" />
       </Button>
       <h1 className="text-2xl font-bold">Edit Snippet</h1>
@@ -40,6 +55,7 @@ export default async function EditSnippetPage({ params }: Props) {
           tags: snippet.tags.map((t) => ({ tag: { name: t.tag.name } })),
         }}
         collections={collections}
+        allTags={allTags}
       />
     </div>
   );
