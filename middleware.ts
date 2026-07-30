@@ -1,21 +1,36 @@
-// Middleware stub — real RBAC implementation is in Phase 1 (Auth & RBAC).
-// Phase 1 will add cookie-presence checks for protected routes
-// while allowing unauthenticated access to PUBLIC collection pages.
-// See: docs/PHASE_1_AUTH_AND_RBAC.md
-//
-// ponytail: ceiling = import { auth } from "@/lib/auth" + auth() as middleware.
-// Upgrade path: create lib/auth.ts in Phase 1, then uncomment below.
-
-// import { auth } from "@/lib/auth";
-// export { auth as middleware };
-
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(_request: NextRequest) {
+// IMPORTANT: Do NOT import from @/lib/auth or @/lib/prisma here.
+// Middleware runs at the edge and cannot use Node.js pg Pool.
+// We only do cookie-presence checking. Authoritative RBAC happens in RSC/Server Actions.
+
+const PROTECTED_PREFIXES = ["/dashboard", "/snippets/new", "/collections"];
+const ADMIN_PREFIXES = ["/admin"];
+
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  const sessionCookie =
+    req.cookies.get("authjs.session-token") ??
+    req.cookies.get("__Secure-authjs.session-token");
+
+  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+  const isAdmin = ADMIN_PREFIXES.some((p) => pathname.startsWith(p));
+
+  if ((isProtected || isAdmin) && !sessionCookie) {
+    const url = new URL("/sign-in", req.url);
+    url.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(url);
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/dashboard/:path*",
+    "/snippets/new",
+    "/collections/:path*",
+    "/admin/:path*",
+  ],
 };
