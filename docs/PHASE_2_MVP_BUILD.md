@@ -4,6 +4,8 @@
 > Builds on [Phase 1 — Auth & RBAC](./PHASE_1_AUTH_AND_RBAC.md).
 > Precedes [Phase 3 — Mutations & UX](./PHASE_3_MUTATIONS_AND_UX.md).
 
+> **✅ Post-Implementation Notes (July 2026):** Phase 2 is complete. Key reality vs. plan: Shadcn UI components are built on **`@base-ui/react`**, so composition uses the `render` prop (e.g., `<Button render={<Link href="..." />}>`) instead of Radix's `asChild` — there is **no `asChild` anywhere in the codebase**. `lib/highlight.ts` accepts a `dark` param (`highlight(code, lang, dark = false)`) toggling `github-dark`/`github-light`. `components/sidebar.tsx` is rendered inside `app/(app)/layout.tsx` (documented here). The actual component inventory is larger than this breakdown predicted (see Phase 3/4 breakdowns for `collection-members`, `create-collection-dialog`, `delete-snippet-button`, `ui/form`, `hooks/use-infinite-scroll`, etc.).
+
 ## Overview / Objective
 
 Phase 2 delivers the **minimum viable product**: a usable, read-heavy
@@ -86,13 +88,13 @@ client (or a heavier rehype pipeline) and is less accurate on edge-case
 languages. For a "code snippet canvas," accuracy and zero client JS win.
 
 ```ts
-// lib/highlight.ts  (server-only)
+// lib/highlight.ts  (server-only) — updated: actual implementation
 import { codeToHtml } from "shiki";
 
-export async function highlight(code: string, lang: string) {
+export async function highlight(code: string, lang: string, dark = false) {
   return codeToHtml(code, {
     lang: lang || "text",
-    theme: "github-dark", // swap for dark-mode aware theme in Phase 4
+    theme: dark ? "github-dark" : "github-light",
   });
 }
 ```
@@ -104,7 +106,7 @@ import { prisma } from "@/lib/prisma";
 
 export default async function SnippetPage({ params }: { params: { id: string } }) {
   const snippet = await prisma.snippet.findUniqueOrThrow({ where: { id: params.id } });
-  const html = await highlight(snippet.code, snippet.language);
+  const html = await highlight(snippet.code, snippet.language, false); // (updated) `dark` param toggles github-dark/github-light
   return (
     <article>
       <h1>{snippet.title}</h1>
@@ -295,14 +297,14 @@ No new env vars in Phase 2. Reuses `DATABASE_URL` and Auth config.
 
 ## Acceptance Criteria
 
-- [ ] Authenticated user reaches `/dashboard` and sees recent snippets.
-- [ ] `/snippets` lists snippets; search box filters by title/code/tag live.
-- [ ] Snippet detail renders syntax-highlighted code (Shiki, no client JS).
-- [ ] Tags display as badges and filter the list when clicked.
-- [ ] Collections page shows own + PUBLIC + TEAM (membership) collections.
-- [ ] `loading.tsx` skeletons appear on navigation.
-- [ ] No page requires a client-side data fetch (all RSC).
-- [ ] `pnpm lint` and `pnpm tsc --noEmit` pass.
+- [x] ✅ Complete (July 2026) Authenticated user reaches `/dashboard` and sees recent snippets.
+- [x] ✅ Complete (July 2026) `/snippets` lists snippets; search box filters by title/code/tag live.
+- [x] ✅ Complete (July 2026) Snippet detail renders syntax-highlighted code (Shiki, no client JS).
+- [x] ✅ Complete (July 2026) Tags display as badges and filter the list when clicked.
+- [x] ✅ Complete (July 2026) Collections page shows own + PUBLIC + TEAM (membership) collections.
+- [x] ✅ Complete (July 2026) `loading.tsx` skeletons appear on navigation.
+- [x] ✅ Complete (July 2026) No page requires a client-side data fetch (all RSC).
+- [x] ✅ Complete (July 2026) `pnpm lint` and `pnpm typecheck` pass.
 
 ## Verification / Testing
 

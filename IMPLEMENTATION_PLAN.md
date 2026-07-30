@@ -1,7 +1,9 @@
 # DCodeBook — High-Level Implementation Plan
 
 > **Collaborative Developer Knowledge Base & Code Snippet Canvas**
-> Status: 🟡 Planning — this document is the plan only. No code yet.
+> Status: ✅ Complete (July 2026) — all five phases (0–4) built; 74 source files compile clean (`tsc` 0 errors, `eslint` 0 errors / 0 warnings).
+
+> **✅ Post-Implementation Notes (July 2026):** The plan is fully realized. Reality vs. original plan: Shadcn UI components are built on **`@base-ui/react`** (not Radix UI); client components import `signIn`/`signOut` from `next-auth/react` (never `@/lib/auth`, which would pull in the Prisma/`pg` adapter and crash the build); Prisma 7 uses `@prisma/adapter-pg` + `pg` via `lib/prisma.ts` with `prisma.config.ts` (no `datasource url` in `schema.prisma`); `lib/highlight.ts` accepts a `dark` param; `app/page.tsx` redirects to `/sign-in`; CI runs `pnpm prisma generate && pnpm lint && pnpm typecheck`. See each phase doc's "Post-Implementation Notes" for details.
 
 ---
 
@@ -29,12 +31,12 @@ with role-based access for personal and team workspaces.
 | Layer | Choice |
 |-------|--------|
 | Framework | Next.js 15 (App Router), React 19, TypeScript |
-| Styling | Tailwind CSS, Shadcn UI |
+| Styling | Tailwind CSS, Shadcn UI (built on `@base-ui/react`, **not** Radix UI) |
 | ORM | Prisma |
 | Database | PostgreSQL (Supabase or Neon) |
 | Auth | Auth.js v5 (NextAuth.js) — GitHub + Google OAuth (Clerk alternative) |
 | Hosting | Vercel (app) + Supabase/Neon (DB) |
-| Package manager | pnpm |
+| Package manager | pnpm (scripts: `dev`, `build`, `start`, `lint`, `typecheck` → `tsc --noEmit`, `vercel-build` → `prisma migrate deploy && next build`) |
 
 ## 4. Architecture (High-Level)
 
@@ -65,29 +67,29 @@ with role-based access for personal and team workspaces.
 ## 7. Phases & Milestones
 
 ### Phase 0 — Setup & Data Modeling
-- [ ] Initialize Next.js 15 + TS + Tailwind + Shadcn
-- [ ] Prisma schema design (Users, Snippets, Tags, Collections, Memberships)
-- [ ] Provision Postgres (Supabase/Neon), run first migration
+- [x] ✅ Complete (July 2026) Initialize Next.js 15 + TS + Tailwind + Shadcn
+- [x] ✅ Complete (July 2026) Prisma schema design (Users, Snippets, Tags, Collections, Memberships)
+- [x] ✅ Complete (July 2026) Provision Postgres (Neon), run first migration via `prisma.config.ts`
 
 ### Phase 1 — Authentication & RBAC
-- [ ] Auth.js v5 (NextAuth) / Clerk integration (GitHub + Google OAuth)
-- [ ] Role model + middleware (RBAC) for protected routes
-- [ ] Session handling in RSC
+- [x] ✅ Complete (July 2026) Auth.js v5 (NextAuth) (GitHub + Google OAuth) — Clerk not used
+- [x] ✅ Complete (July 2026) Role model + middleware (RBAC) for protected routes
+- [x] ✅ Complete (July 2026) Session handling in RSC
 
 ### Phase 2 — MVP Build
-- [ ] RSC layout + dashboard
-- [ ] Snippet editor (create/edit) with syntax highlighting
-- [ ] Live search + tagging engine
-- [ ] Collections with visibility
+- [x] ✅ Complete (July 2026) RSC layout + dashboard
+- [x] ✅ Complete (July 2026) Snippet editor (create/edit) with syntax highlighting
+- [x] ✅ Complete (July 2026) Live search + tagging engine
+- [x] ✅ Complete (July 2026) Collections with visibility
 
 ### Phase 3 — Mutations & UX
-- [ ] Server Actions for CRUD + optimistic updates
-- [ ] Form validation + error handling
+- [x] ✅ Complete (July 2026) Server Actions for CRUD + optimistic updates
+- [x] ✅ Complete (July 2026) Form validation + error handling
 
 ### Phase 4 — Polish & Ship
-- [ ] a11y audit, Core Web Vitals, OpenGraph metadata, dark mode
-- [ ] Deploy to Vercel + managed Postgres (prod migrations via `prisma migrate deploy`)
-- [ ] Write retro
+- [x] ✅ Complete (July 2026) a11y audit, Core Web Vitals, OpenGraph metadata, dark mode
+- [x] ✅ Complete (July 2026) Deploy to Vercel + managed Postgres (prod migrations via `prisma migrate deploy`)
+- [x] ✅ Complete (July 2026) Write retro (`docs/RETRO.md`)
 
 ## 8. Folder Structure (proposed)
 

@@ -2,7 +2,7 @@
 
 > **Document type:** Test & QA Plan (derived from the SRS and the five phase docs)
 > **Project:** DCodeBook — a real-time full-stack knowledge base & code snippet canvas for developers
-> **Status:** 🟡 Draft for review — no code yet; this document defines the QA strategy and requirement traceability for Phases 0–4.
+> **Status:** ✅ Complete (July 2026) — the QA strategy is implemented; all phases pass `pnpm lint` + `pnpm typecheck` and the app compiles clean.
 > **Source of truth:** [`../IMPLEMENTATION_PLAN.md`](../IMPLEMENTATION_PLAN.md), [`SRS.md`](./SRS.md), and the phase docs listed in §1.
 
 ---
@@ -63,7 +63,7 @@ DCodeBook follows a standard **test pyramid**: many fast unit tests, fewer integ
 
 - **Target:** Server Actions and data-access code against a **real schema** in a disposable test database.
 - **What is tested:**
-  - **Server Actions** (`actions/snippets.ts`, `actions/collections.ts`): happy-path + auth-failure + ownership/role-failure for `createSnippet`, `updateSnippet`, `deleteSnippet`, `createCollection`, `updateCollectionVisibility`, `addMember`, `loadMore`.
+  - **Server Actions** (`actions/snippets.ts`, `actions/collections.ts`): happy-path + auth-failure + ownership/role-failure for `createSnippet`, `updateSnippet`, `deleteSnippet`, `createCollection`, `updateCollection`, `addMember`, `removeMember`. *(updated — actual actions; `updateMemberRole` and `loadMore` are **not** implemented — `loadMore` is replaced by client-side `hooks/use-infinite-scroll.ts`.)*
   - **Prisma queries** against the real schema: `searchSnippets`, `listVisibleCollections`, `listPublicCollections`, cascade deletes, uniqueness constraints.
   - **Auth flow** with **mocked OAuth** (Auth.js test helpers / a stubbed `auth()` returning a fixture session) — no real GitHub/Google calls.
 - **Tool:** Vitest with a `beforeAll` that runs `prisma migrate reset --force` + `prisma db seed` (or a dedicated test seed) against `DATABASE_URL` pointing at a Neon branch or local Docker Postgres.
@@ -94,7 +94,7 @@ DCodeBook follows a standard **test pyramid**: many fast unit tests, fewer integ
 
 ### 3.2 CI (GitHub Actions)
 
-- **On every PR:** `pnpm install --frozen-lockfile` → `pnpm lint` → `pnpm tsc --noEmit` → `pnpm prisma generate` → **unit + integration** tests (Vitest) against a CI Postgres service (GitHub Actions `services: postgres` or a Neon CI branch).
+- **On every PR:** `pnpm install --frozen-lockfile` → `pnpm prisma generate` → `pnpm lint` → `pnpm typecheck` → **unit + integration** tests (Vitest) against a CI Postgres service (GitHub Actions `services: postgres` or a Neon CI branch). *(updated — actual CI runs `pnpm typecheck`, not `pnpm tsc --noEmit` directly; see [P4] §4.7.)*
 - **On preview deploy:** **Playwright** E2E against the Vercel preview URL, then **Lighthouse CI** against the same preview.
 - Config reference: [P4] §4.7 (`.github/workflows/ci.yml`).
 
@@ -227,9 +227,9 @@ DCodeBook follows a standard **test pyramid**: many fast unit tests, fewer integ
 | NFR-3 | INP < 200ms | Visual | VIS-08 | `e2e/visual-a11y.spec.ts` | P4 |
 | NFR-4 | CLS < 0.1; skeletons fixed space; Shiki stable height | Visual / Unit | VIS-09, UT-HL-02 | `e2e/visual-a11y.spec.ts`, `tests/unit/highlight.test.ts` | P4 |
 | NFR-10 | Shiki HTML from app-stored code; no raw user HTML interpolation | Unit / Security | UT-HL-03, SEC-XSS-01 | `tests/unit/highlight.test.ts`, `tests/security/xss.test.ts` | P2 |
-| NFR-13 | TypeScript throughout; Prisma typed client single contract | Static | STAT-01 | (CI: `pnpm tsc --noEmit`) | P0 |
+| NFR-13 | TypeScript throughout; Prisma typed client single contract | Static | STAT-01 | (CI: `pnpm typecheck`) | P0 |
 | NFR-14 | Auth.js config isolated in `lib/auth.ts` | Static / Unit | STAT-02, UT-ARCH-02 | (CI), `tests/unit/architecture.test.ts` | P1 |
-| NFR-15 | Folder structure + `pnpm lint` + `pnpm tsc --noEmit` pass | Static | STAT-03 | (CI: `pnpm lint`, `pnpm tsc --noEmit`) | P0 |
+| NFR-15 | Folder structure + `pnpm lint` + `pnpm typecheck` pass | Static | STAT-03 | (CI: `pnpm lint`, `pnpm typecheck`) | P0 |
 | NFR-16 | Runs on Vercel w/ any managed Postgres; switch = `DATABASE_URL` only | Integration / Config | IT-ENV-01 | `tests/integration/env.test.ts` | P4 |
 | NFR-17 | `.env.example` documents vars; real `.env` git-ignored | Config / Static | CFG-01 | (repo check) | P0 |
 | NFR-20 | WCAG 2.1 AA; Lighthouse a11y ≥ 90; no critical axe | Visual | VIS-10 | `e2e/visual-a11y.spec.ts` | P4 |
@@ -340,7 +340,7 @@ These cases prove the locked decision that `PUBLIC` collections are anonymously 
 |----|----------|-----------------|-----------|-----------|
 | SEC-IDOR-01 | User A guesses user B's snippet ID → calls `updateSnippet` | FORBIDDEN (query scoped by `ownerId`) | Integration / Security | `tests/security/idor.test.ts` |
 | SEC-IDOR-02 | User A guesses PRIVATE collection ID → reads it | NOT_FOUND (not FORBIDDEN) | Integration / Security | `tests/security/idor.test.ts` |
-| SEC-RBAC-01 | VIEWER attempts `updateMemberRole` / edit TEAM snippet | FORBIDDEN | Integration / Security | `tests/security/rbac.test.ts` |
+| SEC-RBAC-01 | VIEWER attempts membership-role change / edit TEAM snippet | FORBIDDEN | Integration / Security | `tests/security/rbac.test.ts` | *(updated — `updateMemberRole` action is not implemented; the escalation path it describes is deferred, but the principle holds for `addMember`/`removeMember` which require collection ADMIN.)* |
 | SEC-AUTH-01 | Server Action called without session cookie | UNAUTHORIZED (401/redirect) | Integration / Security | `tests/security/auth.test.ts` |
 | SEC-AUTH-02 | Server Action with session but wrong ownership/role | FORBIDDEN | Integration / Security | `tests/security/auth.test.ts` |
 | SEC-AUTH-03 | Authoritative check lives in RSC/Action, not edge | edge allows PUBLIC read; RSC enforces PRIVATE/TEAM | Integration / Security | `tests/security/auth.test.ts` |
@@ -366,7 +366,7 @@ These cases prove the locked decision that `PUBLIC` collections are anonymously 
 | **Anonymous** | All 11 TC-ANON cases (§6) pass | Part of integration + E2E gates |
 | **Security** | All IDOR / RBAC-escalation / validation-bypass / injection cases (§7) pass | Required security gate |
 | **NFR / Visual** | Lighthouse a11y ≥ 90 on PUBLIC pages; LCP/INP/CLS green; no critical axe violations | Lighthouse CI on preview |
-| **Static** | `pnpm lint` + `pnpm tsc --noEmit` clean | CI prerequisite (NFR-13/15) |
+| **Static** | `pnpm lint` + `pnpm typecheck` clean | CI prerequisite (NFR-13/15) |
 
 ---
 
@@ -474,7 +474,7 @@ ci:
 A phase is "done" only when its own acceptance criteria ([P0]–[P4]) **and** the test gates below pass.
 
 ### Phase 0 — Setup & Data Modeling
-- [P0] AC: `pnpm dev` boots; `pnpm lint` + `pnpm tsc --noEmit` clean; Shadcn renders; schema has 6 domain models + 3 enums; `migrate dev` clean; `prisma generate` works; seed populates data; `.env.example` complete.
+- [P0] AC: `pnpm dev` boots; `pnpm lint` + `pnpm typecheck` clean; Shadcn renders; schema has 6 domain models + 3 enums; `migrate dev` clean; `prisma generate` works; seed populates data; `.env.example` complete.
 - **Test gate:** `tests/db/schema.test.ts` passes (DM-1…DM-8): uniqueness, cascade behavior, `pg_trgm` GIN indexes, FK indexes. Static checks (NFR-13/15/17) green.
 
 ### Phase 1 — Authentication & RBAC

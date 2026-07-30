@@ -2,7 +2,7 @@
 
 > **Document type:** API / Server Action Contract (the security boundary)
 > **Project:** DCodeBook — a real-time full-stack knowledge base & code snippet canvas for developers
-> **Status:** 🟡 Contract baseline — derived from the locked planning documents (no code yet)
+> **Status:** ✅ Complete (July 2026) — implemented; all Server Actions present except `updateMemberRole` (deferred) and `loadMore` (replaced by client-side infinite scroll).
 > **Source of truth:** [`IMPLEMENTATION_PLAN.md`](../IMPLEMENTATION_PLAN.md) and the five phase docs under `docs/` (see §1.4)
 
 ---
@@ -64,8 +64,7 @@ Server Actions are invoked by the Next.js framework over the same-origin POST th
 
 - All Server Actions live in `actions/*.ts`, grouped by domain:
   - `actions/snippets.ts` — snippet mutations (`createSnippet`, `updateSnippet`, `deleteSnippet`, `loadMore`).
-  - `actions/collections.ts` — collection mutations (`createCollection`, `updateCollection`, `deleteCollection`).
-  - `actions/memberships.ts` — membership mutations (`addMember`, `updateMemberRole`, `removeMember`).
+  - `actions/collections.ts` — collection + membership mutations (`createCollection`, `updateCollection`, `deleteCollection`, `addMember`, `removeMember`). *(updated — there is **no** `actions/memberships.ts`; `updateMemberRole` is **not** implemented — deferred/post-MVP.)*
   - `actions/tags.ts` — tag mutations (`createTag`).
 - Each file begins with `"use server";` at the top (or each exported function is individually marked).
 - Read paths are **not** Server Actions. They are RSC data fetches that call the data-access layer (`lib/prisma.ts`, `lib/search.ts`, `lib/collections.ts`, `lib/tags.ts`) directly.
@@ -202,7 +201,7 @@ All error codes are returned in the `error.code` field of the standard envelope 
 | `updateCollection` | ✅ | ✅ | ✅ | ✅ | — | ✅ |
 | `deleteCollection` | ✅ | ✅ | ✅ | ✅*** | — | ✅ |
 | `addMember` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `updateMemberRole` | ✅ | ✅ | ✅ | ✅ | — | ✅ |
+| `updateMemberRole` *(not implemented)* | ✅ | ✅ | ✅ | ✅ | — | ✅ |
 | `removeMember` | ✅ | ✅ | ✅ | ✅ | — | ✅ |
 | `createTag` | ✅ | — | — | ✅ | ✅ | ✅ |
 
@@ -334,13 +333,13 @@ For each action: **name**, **file**, **Zod input**, **output `data`**, **auth re
 - **Error cases:** `UNAUTHENTICATED`, `VALIDATION`, `NOT_FOUND`, `FORBIDDEN` (not owner), `INTERNAL`.
 - **Cross-references:** FR-24, FR-31, FR-37; [P3] §3.2; NFR-24.
 
-### 4.3 Membership actions — `actions/memberships.ts`
+### 4.3 Membership actions — `actions/collections.ts` *(updated — actual location)*
 
-> All membership actions require the caller to be a **collection ADMIN** (owner OR `MembershipRole.ADMIN`). Collection `EDITOR` may edit snippets/collection settings but **cannot** manage membership (matrix: "Manage collection membership → Member ADMIN ✅, Member EDITOR ❌").
+> **ponytail (updated — actual implementation):** There is **no** `actions/memberships.ts` in the final build. The `addMember` and `removeMember` actions live in `actions/collections.ts`. The `updateMemberRole` action described below is **NOT implemented** (deferred/post-MVP). All implemented membership actions require the caller to be a **collection ADMIN** (owner OR `MembershipRole.ADMIN`).
 
 #### 4.3.1 `addMember`
 
-- **File:** `actions/memberships.ts`
+- **File:** `actions/collections.ts` *(updated — actual location)*
 - **Auth requirement:** Authenticated session (`requireUser`).
 - **Zod input:** `membershipAddSchema` (§2.5) — `collectionId` (cuid), `userEmail` (email), `role` (`VIEWER` | `EDITOR` | `ADMIN`).
 - **RBAC check:**
@@ -352,9 +351,9 @@ For each action: **name**, **file**, **Zod input**, **output `data`**, **auth re
 - **Error cases:** `UNAUTHENTICATED`, `VALIDATION`, `NOT_FOUND` (collection missing **or** `userEmail` not found), `FORBIDDEN` (caller not collection admin/owner), `CONFLICT` (user already a member of that collection), `INTERNAL`.
 - **Cross-references:** FR-26, FR-29, FR-31; [P1] §1.6; NFR-24.
 
-#### 4.3.2 `updateMemberRole`
+#### 4.3.2 `updateMemberRole` — ⚠️ NOT IMPLEMENTED (deferred/post-MVP) *(updated — actual implementation)*
 
-- **File:** `actions/memberships.ts`
+- **File:** `actions/memberships.ts` — **NOT IMPLEMENTED** in the final build. *(updated — the actual project has no `updateMemberRole` action and no `actions/memberships.ts`; changing a member's role is not yet supported.)*
 - **Auth requirement:** Authenticated session (`requireUser`).
 - **Zod input:** `membershipUpdateRoleSchema` (§2.5) — `collectionId` (cuid), `userId` (cuid), `role` (`VIEWER` | `EDITOR` | `ADMIN`).
 - **RBAC check:** Same as `addMember` — caller must be collection **owner OR `MembershipRole.ADMIN`**. `FORBIDDEN` otherwise. (A member cannot change their own role; self-promotion is denied.)
@@ -366,7 +365,7 @@ For each action: **name**, **file**, **Zod input**, **output `data`**, **auth re
 
 #### 4.3.3 `removeMember`
 
-- **File:** `actions/memberships.ts`
+- **File:** `actions/collections.ts` *(updated — actual location)*
 - **Auth requirement:** Authenticated session (`requireUser`).
 - **Zod input:** `membershipRemoveSchema` (§2.5) — `collectionId` (cuid), `userId` (cuid).
 - **RBAC check:**
@@ -476,6 +475,8 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient();
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 ```
 
+> **ponytail (updated — actual implementation):** Prisma 7 uses `@prisma/adapter-pg` + `pg` — the actual `lib/prisma.ts` constructs `new PrismaClient({ adapter: new PrismaPg({ connectionString }) })`. `lib/db.ts` was only a planning alias; the real file is `lib/prisma.ts`.
+
 > **Naming note.** This contract refers to the singleton as `lib/prisma.ts` to stay consistent with all source docs ([P0], [P1], [P2], [P3]). If the project later aliases it as `lib/db.ts`, the contract is unchanged — it is the one and only Prisma client instance used by every Server Action and RSC.
 
 - Runtime uses the **pooled** `DATABASE_URL`; `DATABASE_URL_DIRECT` is reserved for `prisma migrate` / `prisma db seed` (NFR-16, [P0] §0.4).
@@ -512,13 +513,13 @@ Where a mutation touches multiple rows (e.g., snippet create with tag `connectOr
 | `createSnippet` | FR-7, FR-8, FR-14, FR-31, FR-32, FR-37, NFR-7, NFR-24 |
 | `updateSnippet` | FR-10, FR-14, FR-29, FR-31, FR-32, FR-37, NFR-7, NFR-24 |
 | `deleteSnippet` | FR-11, FR-12, FR-29, FR-31, FR-37, NFR-24 |
-| `loadMore` | FR-36, NFR-19 |
+| `loadMore` *(not implemented as a Server Action; pagination via `hooks/use-infinite-scroll.ts`)* | FR-36, NFR-19 |
 | `getSnippet` (RSC) | FR-9, FR-13, FR-44, FR-46, NFR-24 |
 | `createCollection` | FR-20, FR-21, FR-31, FR-32, FR-37, NFR-24 |
 | `updateCollection` | FR-21, FR-22, FR-29, FR-31, FR-37, NFR-24 |
 | `deleteCollection` | FR-24, FR-31, FR-37, NFR-24 |
 | `addMember` | FR-26, FR-29, FR-31, NFR-24 |
-| `updateMemberRole` | FR-26, FR-29, FR-31, NFR-24 |
+| `updateMemberRole` *(not implemented)* | FR-26, FR-29, FR-31, NFR-24 |
 | `removeMember` | FR-26, FR-29, FR-31, NFR-24 |
 | `createTag` | FR-14, FR-15, FR-31, FR-32, NFR-24 |
 | `searchSnippets` (RSC) | FR-17, FR-18, FR-19, FR-44, NFR-24 |
@@ -533,7 +534,7 @@ Where a mutation touches multiple rows (e.g., snippet create with tag `connectOr
 | `loadMore` | [P3] §3.6 (Pagination), [SRS] §3.1.2 |
 | `getSnippet` (RSC) | [P2] §2.3 (Shiki highlight), §2.7 |
 | `createCollection` / `updateCollection` / `deleteCollection` | [P3] §3.7 (Action signature conventions); [P2] §2.6 (visibility) |
-| `addMember` / `updateMemberRole` / `removeMember` | [P1] §1.6 (`lib/rbac.ts`); [P3] §3.7 |
+| `addMember` / `removeMember` (in `actions/collections.ts`; `updateMemberRole` not implemented) | [P1] §1.6 (`lib/rbac.ts`); [P3] §3.7 |
 | `createTag` + tag upsert | [P2] §2.5 (Tagging engine); [P3] §3.2 (`connectOrCreate`) |
 | `searchSnippets` (RSC) | [P2] §2.4 (Live search) |
 | Middleware | [P1] §1.5 |
@@ -553,7 +554,7 @@ The table below is the contract's summary of the SRS §3.5.2 matrix, focused on 
 | `updateCollection` | ❌ | ✅ | ❌ | ❌ | ✅** | ✅** | ✅ |
 | `deleteCollection` | ❌ | ✅ | ❌ | ❌ | ❌ | ❌*** | ❌*** |
 | `addMember` | ❌ | ✅*** | ❌ | ❌ | ❌ | ✅*** | ❌ |
-| `updateMemberRole` | ❌ | ✅*** | ❌ | ❌ | ❌ | ✅*** | ❌ |
+| `updateMemberRole` *(not implemented)* | ❌ | ✅*** | ❌ | ❌ | ❌ | ✅*** | ❌ |
 | `removeMember` | ❌ | ✅*** | ❌ (self ✅) | ❌ (self ✅) | ❌ (self ✅) | ✅*** (self ✅) | ❌ (self ✅) |
 | `createTag` | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `searchSnippets` (RSC) | PUBLIC only | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |

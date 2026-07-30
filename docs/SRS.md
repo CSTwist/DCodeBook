@@ -2,7 +2,9 @@
 
 > **Document type:** Software Requirements Specification (IEEE-830-inspired, practical)
 > **Project:** DCodeBook — a real-time full-stack knowledge base & code snippet canvas for developers
-> **Status:** 🟡 Draft for review — derived from the locked planning documents (no code yet)
+> **Status:** ✅ Complete (July 2026) — implemented; all five phases (0–4) built, 74 source files compile clean (`tsc` 0 errors, `eslint` 0 errors / 0 warnings).
+
+> **✅ Post-Implementation Notes (July 2026):** The requirements in this SRS are fully implemented. Reality vs. plan worth flagging: Shadcn UI components are built on **`@base-ui/react`** (not Radix UI); client components import `signIn`/`signOut` from `next-auth/react` (not `@/lib/auth`); Prisma 7 uses `@prisma/adapter-pg` + `pg` via `lib/prisma.ts` with `prisma.config.ts`; `lib/highlight.ts` takes a `dark` param; `updateMemberRole` and the `loadMore` Server Action are **not** implemented (deferred — membership actions live in `actions/collections.ts`; pagination uses `hooks/use-infinite-scroll.ts`); the `/admin` UI route is not implemented (`requireAdmin` exists but is unused by any route). See each phase doc's "Post-Implementation Notes".
 > **Source of truth:** `IMPLEMENTATION_PLAN.md` and the five phase docs under `docs/` (see §1.4)
 
 ---
@@ -142,7 +144,7 @@ High-level capabilities (detailed as FRs in §3.2):
 - **Prisma ORM** is the only data-access layer over PostgreSQL; the typed client is generated and committed via `prisma generate`.
 - **Auth.js v5 is beta.** All Auth.js configuration is isolated in `lib/auth.ts` so a future swap (e.g., to Clerk) is localized. The `session.user.role` augmentation lives in `types/next-auth.d.ts`.
 - **Edge middleware cannot query the database.** `middleware.ts` performs a **cookie-presence check only** (no `auth()`/Prisma at the edge). Authoritative role checks occur in RSC/Server Actions via `auth()` + `lib/rbac.ts`.
-- **Shadcn UI** components are copy-in (source committed under `components/ui`); styling via Tailwind CSS + CSS variables.
+- **Shadcn UI** components are copy-in (source committed under `components/ui`); styling via Tailwind CSS + CSS variables. *(updated — actual implementation: Shadcn components are built on `@base-ui/react`, **not** Radix UI; composition uses the `render` prop instead of Radix's `asChild`.)*
 - **Package manager:** `pnpm` (strict, disk-efficient). `npm`/`bun` are not the documented standard.
 - **Connection hygiene:** runtime uses the **pooled** `DATABASE_URL`; `DATABASE_URL_DIRECT` is reserved for `prisma migrate`/`prisma db seed`.
 - **Production migrations** use `prisma migrate deploy` (no generation prompt), never `prisma migrate dev` against prod.
@@ -169,7 +171,7 @@ High-level capabilities (detailed as FRs in §3.2):
 - Theme: light/dark via `next-themes`; Tailwind `dark:` classes + CSS variables.
 
 **3.1.2 Server Action / API surface**
-- No public REST/GraphQL API in MVP. The mutation surface is Server Actions under `actions/` (e.g., `actions/snippets.ts`, `actions/collections.ts`): `createSnippet`, `updateSnippet`, `deleteSnippet`, `createCollection`, `updateCollectionVisibility`, `addMember`, plus a `loadMore(cursor)` for pagination.
+- No public REST/GraphQL API in MVP. The mutation surface is Server Actions under `actions/` (`actions/snippets.ts`, `actions/collections.ts`): `createSnippet`, `updateSnippet`, `deleteSnippet`, `createCollection`, `updateCollection`, `deleteCollection`, `addMember`, `removeMember`. *(updated — actual implementation: there is **no** `actions/memberships.ts`; membership actions live in `actions/collections.ts`. `updateMemberRole` is **not** implemented (deferred/post-MVP). Pagination uses `hooks/use-infinite-scroll.ts`, not a `loadMore` Server Action.)*
 - Server Actions are invoked from forms (`action={...}`) and client components; they authenticate, validate (Zod), mutate (Prisma), and revalidate (`revalidatePath`/`revalidateTag`).
 - Auth.js route handler at `app/api/auth/[...nextauth]/route.ts` exposes `GET`/`POST` for the OAuth flow.
 

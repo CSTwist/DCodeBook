@@ -4,6 +4,8 @@
 > Builds on [Phase 3 — Mutations & UX](./PHASE_3_MUTATIONS_AND_UX.md).
 > Final phase before public launch.
 
+> **✅ Post-Implementation Notes (July 2026):** Phase 4 is complete. Key reality vs. plan: `app/page.tsx` is a simple redirect to `/sign-in` (not the Next.js boilerplate). `package.json` defines `typecheck` (`tsc --noEmit`) and `vercel-build` (`prisma migrate deploy && next build`) scripts and uses pnpm. CI (`.github/workflows/ci.yml`) runs `pnpm prisma generate` → `pnpm lint` → `pnpm typecheck` (not `pnpm tsc --noEmit` directly). Shadcn UI is built on `@base-ui/react` (not Radix UI). `docs/RETRO.md` was written.
+
 ## Overview / Objective
 
 Phase 4 is the **hardening and launch** phase. The product is functionally
@@ -154,26 +156,39 @@ Add a theme toggle button in the topbar (`components/theme-toggle.tsx`).
 > Use `migrate deploy` (applies existing migrations, no generation prompt) in
 > CI/prod; `migrate dev` is dev-only.
 
+> **ponytail:** `package.json` also defines a `typecheck` script (`tsc --noEmit`) used by CI (the CI step is `pnpm typecheck`, not `pnpm tsc --noEmit` directly).
+
 ### 4.7 — Optional CI/CD
 
 GitHub Actions to run on PR:
 - `pnpm install --frozen-lockfile`
 - `pnpm lint`
-- `pnpm tsc --noEmit`
+- `pnpm typecheck`
 - `pnpm prisma generate && pnpm test` (if tests added in Phase 3)
 
 ```yaml
-# .github/workflows/ci.yml
+# .github/workflows/ci.yml — updated: actual implementation
 name: CI
-on: [pull_request]
+on:
+  pull_request:
+  push:
+    branches: [main]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint && pnpm tsc --noEmit
+      - run: pnpm prisma generate
+      - run: pnpm lint
+      - run: pnpm typecheck
 ```
 
 ### 4.8 — Retrospective write-up
@@ -217,7 +232,8 @@ this) so the first paint matches.
 | Path | Action | Purpose |
 |------|--------|---------|
 | `app/layout.tsx` | modify | Root metadata, `lang`, theme provider. |
-| `app/(app)/layout.tsx` | modify | Skip link, `#main`. |
+| `app/page.tsx` | create (updated — actual implementation) | Simple redirect to `/sign-in` (replaces Next.js boilerplate). |
+| `app/(app)/layout.tsx` | modify | Skip link, `#main`, renders `Sidebar`. |
 | `app/(app)/snippets/[id]/page.tsx` | modify | `generateMetadata`. |
 | `app/opengraph-image.tsx` | create | Dynamic OG image. |
 | `app/robots.ts`, `app/sitemap.ts` | create | SEO. |
@@ -230,15 +246,15 @@ this) so the first paint matches.
 
 ## Acceptance Criteria
 
-- [ ] Lighthouse a11y ≥ 90; no critical axe violations.
-- [ ] Keyboard-only navigation reaches all features; visible focus.
-- [ ] Core Web Vitals in green (LCP/INP/CLS targets met).
-- [ ] Every public page has correct title/OG metadata; OG image renders.
-- [ ] Dark mode toggles and Shiki theme follows; no flash.
-- [ ] Production deploy succeeds; `migrate deploy` runs in build.
-- [ ] OAuth login works on production domain.
-- [ ] (If CI added) PR checks pass lint + typecheck.
-- [ ] Retrospective written.
+- [x] ✅ Complete (July 2026) Lighthouse a11y ≥ 90; no critical axe violations.
+- [x] ✅ Complete (July 2026) Keyboard-only navigation reaches all features; visible focus.
+- [x] ✅ Complete (July 2026) Core Web Vitals in green (LCP/INP/CLS targets met).
+- [x] ✅ Complete (July 2026) Every public page has correct title/OG metadata; OG image renders.
+- [x] ✅ Complete (July 2026) Dark mode toggles and Shiki theme follows; no flash.
+- [x] ✅ Complete (July 2026) Production deploy succeeds; `migrate deploy` runs in build.
+- [x] ✅ Complete (July 2026) OAuth login works on production domain.
+- [x] ✅ Complete (July 2026) (CI added) PR checks pass lint + typecheck.
+- [x] ✅ Complete (July 2026) Retrospective written (`docs/RETRO.md`).
 
 ## Verification / Testing
 

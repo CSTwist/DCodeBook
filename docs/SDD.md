@@ -2,7 +2,9 @@
 
 > **Document type:** Software Design Document (IEEE-1016-inspired, practical)
 > **Project:** DCodeBook — a real-time full-stack knowledge base & code snippet canvas for developers
-> **Status:** 🟡 Draft for review — derived from the locked planning documents (no code yet)
+> **Status:** ✅ Complete (July 2026) — implemented; all five phases built, 74 source files compile clean.
+
+> **✅ Post-Implementation Notes (July 2026):** The design in this SDD is implemented. Reality vs. plan: Shadcn UI components are built on **`@base-ui/react`** (not Radix UI) and use the `render` prop for composition; client components import `signIn`/`signOut` from `next-auth/react`; Prisma 7 uses `@prisma/adapter-pg` + `pg` via `lib/prisma.ts` with `prisma.config.ts`; `lib/highlight.ts` takes a `dark` param. `updateMemberRole` and the `loadMore` Server Action are **not** implemented (deferred); membership actions live in `actions/collections.ts` and pagination uses `hooks/use-infinite-scroll.ts`. The `/admin` UI route is not implemented. See each phase doc's "Post-Implementation Notes".
 > **Source of truth:** `IMPLEMENTATION_PLAN.md` and the five phase docs under `docs/` (see §1.4), plus the locked decisions captured in the project brief.
 
 ---
@@ -89,7 +91,7 @@ conforms to all of them:
 - **Prod migrations:** `prisma migrate deploy` (NOT `migrate dev`) in the
   Vercel build step.
 - **Tech stack:** Next.js 15 App Router, React 19, RSC, Server Actions,
-  Tailwind CSS + Shadcn UI, TypeScript strict.
+  Tailwind CSS + Shadcn UI (built on `@base-ui/react`, **not** Radix UI), TypeScript strict.
 - **Hosting:** Vercel + managed Postgres (Neon or Supabase).
 - **Mutations:** Server Actions with Zod validation, `useOptimistic` /
   `useTransition` on the client, `revalidatePath` / `revalidateTag` after
@@ -420,10 +422,10 @@ All `"use server"`; all call `requireUser()` first (FR-31, FR-45).
 
 | File | Actions | Auth / checks |
 |------|---------|---------------|
-| `actions/snippets.ts` | `createSnippet`, `updateSnippet` (owner check), `deleteSnippet` (owner check), `loadMore(cursor)` | `requireUser`; ownership enforced; Zod `snippetSchema`. |
-| `actions/collections.ts` | `createCollection`, `updateCollectionVisibility`, `deleteCollection` | `requireUser`; `canEditCollection` for updates/deletes. |
-| `actions/memberships.ts` | `addMember`, `removeMember`, `updateMemberRole` | `requireUser`; `canEditCollection` (ADMIN membership role). |
-| `actions/tags.ts` | tag connect/manage helpers used by snippet mutations | `requireUser`; scoped by snippet ownership. |
+| `actions/snippets.ts` | `createSnippet`, `updateSnippet` (owner check), `deleteSnippet` (owner check) | `requireUser`; ownership enforced; Zod `snippetSchema`. *(updated — no `loadMore` Server Action; pagination via `hooks/use-infinite-scroll.ts`.)* |
+| `actions/collections.ts` | `createCollection`, `updateCollection`, `deleteCollection`, `addMember`, `removeMember` | `requireUser`; `canEditCollection` for updates/deletes/membership. *(updated — actual action is `updateCollection`, not `updateCollectionVisibility`; `updateMemberRole` is **NOT** implemented — deferred.)* |
+| `actions/memberships.ts` | — | *(updated — does **not** exist; membership actions live in `actions/collections.ts`.)* |
+| `actions/tags.ts` | — | *(updated — does **not** exist; tag connect/manage is handled inside `actions/snippets.ts` via `connectOrCreate`.)* |
 
 ### 5.6 `middleware.ts` — edge cookie-presence gate
 

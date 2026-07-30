@@ -3,6 +3,8 @@
 > Part of the [DCodeBook](../IMPLEMENTATION_PLAN.md) implementation docs.
 > Precedes [Phase 1 — Auth & RBAC](./PHASE_1_AUTH_AND_RBAC.md).
 
+> **✅ Post-Implementation Notes (July 2026):** Phase 0 is complete. Key reality vs. plan: Prisma 7 moved the `datasource url`/`directUrl` out of `schema.prisma` into `prisma.config.ts`; the runtime uses `@prisma/adapter-pg` + `pg` via `lib/prisma.ts` (see updated snippet below). `next-themes` was installed in Phase 0. Shadcn UI components are built on **`@base-ui/react`**, *not* Radix UI. `pnpm typecheck` (`tsc --noEmit`) and `pnpm vercel-build` (`prisma migrate deploy && next build`) scripts exist. Migrations use `prisma migrate deploy` for prod (not `migrate dev`). `@auth/prisma-adapter` is a separate dependency added in Phase 1 (not in Phase 0's install list).
+
 ## Overview / Objective
 
 Phase 0 is the foundation of the entire project. Its goal is to stand up a
@@ -155,6 +157,8 @@ pnpm prisma init --datasource-provider postgresql
 This creates `prisma/schema.prisma` and a minimal `.env`. Replace the schema
 with the full model below (see *Technical Implementation Notes*).
 
+> **ponytail (updated — actual implementation):** Prisma 7 removed `datasource url`/`directUrl` from `schema.prisma`. The runtime uses `@prisma/adapter-pg` + a `pg` Pool via `lib/prisma.ts`, and migrations are driven by `prisma.config.ts` (which holds the `datasource.url`). `pnpm prisma init` is still valid, but the connection config now lives in `prisma.config.ts`, not the schema.
+
 ### 0.6 — First migration and generate client
 
 ```bash
@@ -165,6 +169,8 @@ pnpm prisma generate
 `migrate dev` both creates the migration SQL under
 `prisma/migrations/0001_init/` and applies it. `generate` emits the typed
 Prisma Client.
+
+> **ponytail (updated — actual implementation):** For production, use `prisma migrate deploy` (applies existing migrations, no generation prompt) — wired into the `vercel-build` script. `migrate dev` is dev-only.
 
 ### 0.7 — Seed script
 
@@ -394,21 +400,29 @@ AUTH_GOOGLE_SECRET=""
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-### `lib/prisma.ts` singleton (illustrative)
+### `lib/prisma.ts` singleton (updated — actual implementation)
 
 ```ts
 // lib/prisma.ts
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
-export const prisma =
-  globalForPrisma.prisma ?? new PrismaClient();
+function createClient(): PrismaClient {
+  const connectionString =
+    process.env.DATABASE_URL ?? process.env.DATABASE_URL_DIRECT;
+  if (!connectionString) throw new Error("Missing DATABASE_URL or DATABASE_URL_DIRECT");
+  const adapter = new PrismaPg({ connectionString });
+  return new PrismaClient({ adapter });
+}
+
+export const prisma = globalForPrisma.prisma ?? createClient();
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 ```
 
-This avoids exhausting connections during Next.js hot-reload in dev.
+> **ponytail:** Prisma 7 requires the `@prisma/adapter-pg` + `pg` Pool adapter (serverless-safe); the pooled `DATABASE_URL` is used at runtime, `DATABASE_URL_DIRECT` as fallback. This avoids exhausting connections during Next.js hot-reload in dev and at the edge.
 
 ### `lib/utils.ts` (Shadcn standard)
 
@@ -432,6 +446,7 @@ export function cn(...inputs: ClassValue[]) {
 | `prisma/schema.prisma` | create/overwrite | Full data model (above). |
 | `prisma/migrations/0001_init/` | created by migrate | First migration SQL (+ trgm indexes). |
 | `prisma/seed.ts` | create | Demo data for local dev. |
+| `prisma.config.ts` | create (updated — actual implementation) | Holds `datasource.url` (Prisma 7 moved it out of `schema.prisma`); `migrations.path` + `migrations.seed`. |
 | `middleware.ts` | create (stub) | Placeholder; real RBAC in Phase 1. |
 | `.env.example` | create | Documented env template. |
 | `.gitignore` | append | Ensure `.env` ignored. |
@@ -440,26 +455,27 @@ export function cn(...inputs: ClassValue[]) {
 
 ## Acceptance Criteria
 
-- [ ] `pnpm dev` boots a Next.js 15 App Router app with no type errors.
-- [ ] `pnpm lint` and `pnpm tsc --noEmit` pass.
-- [ ] Shadcn components render (e.g., a `<Button>` on the home page).
-- [ ] `prisma/schema.prisma` contains all six domain models + three enums.
-- [ ] `prisma migrate dev --name init` applies cleanly; tables exist in DB.
-- [ ] `prisma generate` produces a typed client; `lib/prisma.ts` imports it.
-- [ ] `prisma db seed` populates demo data successfully.
-- [ ] `.env.example` documents every variable; real `.env` is git-ignored.
-- [ ] `README.md` explains setup from a clean clone.
+- [x] ✅ Complete (July 2026) `pnpm dev` boots a Next.js 15 App Router app with no type errors.
+- [x] ✅ Complete (July 2026) `pnpm lint` and `pnpm typecheck` pass.
+- [x] ✅ Complete (July 2026) Shadcn components render (e.g., a `<Button>` on the home page).
+- [x] ✅ Complete (July 2026) `prisma/schema.prisma` contains all six domain models + three enums.
+- [x] ✅ Complete (July 2026) `prisma migrate dev --name init` applies cleanly; tables exist in DB.
+- [x] ✅ Complete (July 2026) `prisma generate` produces a typed client; `lib/prisma.ts` imports it.
+- [x] ✅ Complete (July 2026) `prisma db seed` populates demo data successfully.
+- [x] ✅ Complete (July 2026) `.env.example` documents every variable; real `.env` is git-ignored.
+- [x] ✅ Complete (July 2026) `README.md` explains setup from a clean clone.
 
 ## Verification / Testing
 
 ```bash
 # Type-check & lint
-pnpm tsc --noEmit
+pnpm typecheck
 pnpm lint
 
 # DB lifecycle
 pnpm prisma migrate dev --name init
 pnpm prisma db seed
+# prod: pnpm prisma migrate deploy
 pnpm prisma studio          # visually confirm tables + seed rows
 
 # App boots

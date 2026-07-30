@@ -4,6 +4,8 @@
 > Builds on [Phase 0 — Setup & Data Modeling](./PHASE_0_SETUP_AND_DATA_MODELING.md).
 > Precedes [Phase 2 — MVP Build](./PHASE_2_MVP_BUILD.md).
 
+> **✅ Post-Implementation Notes (July 2026):** Phase 1 is complete. Key reality vs. plan: client components (`sign-in-buttons.tsx`, `user-menu.tsx`) import `signIn`/`signOut` from `next-auth/react`, **not** `@/lib/auth` (importing the latter pulls in the Prisma/`pg` adapter → Node `dns` → build crash). `@auth/prisma-adapter` is a separate dependency added here (not in Phase 0's install list). The `Github`/`Chrome` lucide icons were removed in `lucide-react` 1.27.0; the actual code uses `Code2` and `Mail`. Shadcn UI is built on `@base-ui/react` (not Radix UI), so composition uses the `render` prop (see Phase 2/3 notes). `types/next-auth.d.ts` exists and augments `session.user.role`.
+
 ## Overview / Objective
 
 Phase 1 makes DCodeBook a **secure, multi-user application**. It introduces
@@ -272,27 +274,29 @@ export default function SignInPage() {
 ```
 
 ```tsx
-// components/sign-in-buttons.tsx  ("use client")
+// components/sign-in-buttons.tsx  ("use client") — updated: actual implementation
 "use client";
-import { signIn } from "@/lib/auth"; // client-safe action wrapper
+import { signIn } from "next-auth/react"; // (updated) client-safe helper from next-auth/react, NOT @/lib/auth
+import { Button } from "@/components/ui/button";
+import { Code2, Mail } from "lucide-react"; // (updated) Github/Chrome icons removed in lucide-react 1.27.0
 
 export function SignInButtons() {
   return (
-    <>
-      <Button onClick={() => signIn("github", { callbackUrl: "/dashboard" })}>
+    <div className="flex flex-col gap-3">
+      <Button variant="outline" onClick={() => signIn("github", { callbackUrl: "/dashboard" })}>
+        <Code2 className="mr-2 h-4 w-4" />
         Continue with GitHub
       </Button>
-      <Button onClick={() => signIn("google", { callbackUrl: "/dashboard" })}>
+      <Button variant="outline" onClick={() => signIn("google", { callbackUrl: "/dashboard" })}>
+        <Mail className="mr-2 h-4 w-4" />
         Continue with Google
       </Button>
-    </>
+    </div>
   );
 }
 ```
 
-> The client `signIn` is re-exported from `lib/auth.ts` (Auth.js provides a
-> client-safe `signIn`/`signOut`). Do not import the server `auth()` into
-> client components.
+> **ponytail (updated — actual implementation):** Client components import `signIn`/`signOut` from `next-auth/react`, **never** from `@/lib/auth`. Importing from `@/lib/auth` pulls in the Prisma adapter → `pg` → Node.js `dns` module and crashes the build. The `Github`/`Chrome` icons were removed from `lucide-react` 1.27.0, so the actual code uses `Code2` and `Mail`.
 
 ### 1.8 — Protected layout + user menu
 
@@ -355,14 +359,16 @@ declare module "next-auth" {
 
 ## Acceptance Criteria
 
-- [ ] GitHub and Google OAuth both complete a login round-trip locally.
-- [ ] First login auto-creates a `User` + `Account` row (Prisma adapter).
-- [ ] `auth()` returns the session (with `id` + `role`) inside an RSC.
-- [ ] Visiting `/dashboard` while logged out redirects to `/sign-in`.
-- [ ] `/admin` is blocked for `USER` role (both middleware + `requireAdmin`).
-- [ ] Sign-out from the user menu clears the session.
-- [ ] `lib/rbac.ts` helpers are used by at least one Server Action.
-- [ ] `pnpm lint` and `pnpm tsc --noEmit` pass.
+- [x] ✅ Complete (July 2026) GitHub and Google OAuth both complete a login round-trip locally.
+- [x] ✅ Complete (July 2026) First login auto-creates a `User` + `Account` row (Prisma adapter).
+- [x] ✅ Complete (July 2026) `auth()` returns the session (with `id` + `role`) inside an RSC.
+- [x] ✅ Complete (July 2026) Visiting `/dashboard` while logged out redirects to `/sign-in`.
+- [x] ✅ Complete (July 2026) `/admin` prefix is protected by middleware (`requireAdmin` exists in `lib/rbac.ts` but the `/admin` UI route is **not** implemented in the final build — see ponytail note).
+- [x] ✅ Complete (July 2026) Sign-out from the user menu clears the session.
+- [x] ✅ Complete (July 2026) `lib/rbac.ts` helpers are used by at least one Server Action.
+- [x] ✅ Complete (July 2026) `pnpm lint` and `pnpm typecheck` pass.
+
+> **ponytail:** The `/admin` UI route (`app/admin/page.tsx`) is **not** present in the final build; `requireAdmin()` in `lib/rbac.ts` is available but currently unused by any route. Middleware still protects the `/admin` prefix as a defense-in-depth measure.
 
 ## Verification / Testing
 

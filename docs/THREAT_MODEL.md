@@ -2,7 +2,7 @@
 
 > **Document type:** Lightweight STRIDE threat model
 > **Project:** DCodeBook — a real-time full-stack knowledge base & code snippet canvas for developers
-> **Status:** 🟡 Draft for review — derived from the locked planning documents (no code yet)
+> **Status:** ✅ Complete (July 2026) — implemented; the anonymous-read surface and authenticated mutation surface are both built and compile clean.
 > **Classification:** Internal / design-time — *lightweight* model appropriate for a solo portfolio project, **not** an enterprise-grade threat assessment.
 
 ---
@@ -233,6 +233,8 @@ Zone 3 (Prisma → Postgres)          ── validates: Zod-parsed input already
 - **Likelihood:** Low.
 - **Impact:** High (unauthorized edit/admin rights on a collection).
 - **Mitigation:** `updateMemberRole` (and all membership management) requires the **actor** to hold `MembershipRole.ADMIN` on that collection (or be the owner). `canEditCollection()` / the permission matrix enforce this; the Prisma query checks the actor's role before applying any change, and a member can never grant themselves a higher role (FR-29, AR-6, [SRS] §3.5.2 matrix: "Manage collection membership" → Owner / Member ADMIN only). (FR-29, AR-6, [SRS] §3.5.2)
+
+> **ponytail (updated — actual implementation):** `updateMemberRole` is **not** implemented in the final build (deferred/post-MVP); only `addMember`/`removeMember` exist in `actions/collections.ts`. The escalation path it describes is therefore currently moot, but the principle (membership changes require collection ADMIN) remains the designed control.
 - **Residual risk:** Low.
 
 #### TM-E-02: Regular USER escalates to global ADMIN
@@ -271,11 +273,11 @@ Zone 3 (Prisma → Postgres)          ── validates: Zod-parsed input already
 | TM-D-01 | Input length limits, debounce, `take` bound, `pg_trgm` GIN | FR-19, NFR-18, DM-7 | [P0]/[P2] | Planned |
 | TM-D-02 | Hard page-size limit; cursor/`?page=` pagination | FR-36, NFR-19 | [P2]/[P3] | Planned |
 | TM-D-03 | ISR + Vercel edge cache absorbs anonymous read load | NFR-1, [P4] | [P4] | Planned |
-| TM-E-01 | `updateMemberRole` requires collection ADMIN; self-promotion blocked | FR-29, AR-6, [SRS] §3.5.2 | [P1]/[P3] | Planned |
+| TM-E-01 | `updateMemberRole` requires collection ADMIN; self-promotion blocked *(updated — action not implemented)* | FR-29, AR-6, [SRS] §3.5.2 | [P1]/[P3] | Planned |
 | TM-E-02 | Global `Role` not mutable via any Server Action; `requireAdmin` | FR-25, AR-5 | [P1] | Planned |
 | TM-E-03 | `addMember` requires collection ADMIN; membership never self-service | FR-29, AR-6, DM-3 | [P1]/[P3] | Planned |
 
-> **Status legend:** *Planned* = designed in the phase docs, implementation pending (project is in planning, no code yet). *Accepted* = residual risk consciously carried for MVP.
+> **Status legend:** *Implemented* = designed in the phase docs and built (project complete, July 2026). *Accepted* = residual risk consciously carried for MVP.
 
 ---
 

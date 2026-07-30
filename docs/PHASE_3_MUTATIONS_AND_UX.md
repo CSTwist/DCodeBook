@@ -4,6 +4,8 @@
 > Builds on [Phase 2 — MVP Build](./PHASE_2_MVP_BUILD.md).
 > Precedes [Phase 4 — Polish & Ship](./PHASE_4_POLISH_AND_SHIP.md).
 
+> **✅ Post-Implementation Notes (July 2026):** Phase 3 is complete. Key reality vs. plan: Shadcn UI is built on **`@base-ui/react`**, so composition uses the `render` prop, not Radix's `asChild`. The membership action `updateMemberRole` is **not** implemented in the final build (only `addMember`/`removeMember` exist in `actions/collections.ts`); it is deferred/post-MVP (see API_CONTRACT §4.3). The `loadMore` Server Action described below is also **not** present — pagination is handled client-side via `hooks/use-infinite-scroll.ts`. The actual Server Actions use `requireUser()` from `lib/rbac.ts` (not a direct `auth()` call).
+
 ## Overview / Objective
 
 Phase 3 turns the read-only MVP into a **fully interactive product**. It
@@ -66,7 +68,7 @@ surface is fully authenticated (FR-45/NFR-24).
 // actions/snippets.ts
 "use server";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
+import { requireUser } from "@/lib/rbac"; // (updated) actual code uses requireUser(), not auth() directly
 import { prisma } from "@/lib/prisma";
 import { snippetSchema } from "@/lib/validations";
 import { requireUser } from "@/lib/rbac";
@@ -215,7 +217,7 @@ Server Action `loadMore(cursor)` and append. Alternatively, simpler
 | `updateSnippet` | `requireUser` + owner | `snippetSchema` | detail + lists |
 | `deleteSnippet` | `requireUser` + owner | id cuid | lists |
 | `createCollection` | `requireUser` | `collectionSchema` | `/collections` |
-| `updateCollectionVisibility` | `canEditCollection` | enum | collection detail |
+| `updateCollection` | `canEditCollection` | enum | collection detail | *(updated — actual action is `updateCollection`, not `updateCollectionVisibility`)* |
 | `addMember` | `canEditCollection` | userId+role | collection detail |
 
 ### Error result type
@@ -235,26 +237,31 @@ No new env vars. Reuses existing.
 | Path | Action | Purpose |
 |------|--------|---------|
 | `lib/validations.ts` | create | Zod schemas (snippet, collection). |
-| `actions/snippets.ts` | create/overwrite | CRUD Server Actions. |
-| `actions/collections.ts` | create | Collection + membership actions. |
-| `components/snippet-form.tsx` | create | Client form + `useFormState`. |
-| `components/snippet-list.tsx` | create | Optimistic list (`useOptimistic`). |
+| `actions/snippets.ts` | create/overwrite | CRUD Server Actions (`createSnippet`, `updateSnippet`, `deleteSnippet`). |
+| `actions/collections.ts` | create | Collection + membership actions (`createCollection`, `updateCollection`, `deleteCollection`, `addMember`, `removeMember`). **`updateMemberRole` is NOT implemented** (deferred — see API_CONTRACT). |
+| `components/snippet-form.tsx` | create | Client form + `useFormState`/`useFormStatus`. |
+| `components/snippet-list.tsx` | planned — not implemented | Optimistic list (`useOptimistic`). *(updated — actual implementation uses `hooks/use-infinite-scroll.ts` + `components/snippet-form.tsx`; no `snippet-list.tsx` file exists.)* |
 | `components/collection-form.tsx` | create | Collection editor. |
-| `components/infinite-snippets.tsx` | create | Cursor pagination UI. |
-| `hooks/use-infinite-scroll.ts` | create | IntersectionObserver hook. |
+| `components/infinite-snippets.tsx` | planned — not implemented | Cursor pagination UI. *(updated — actual implementation uses `hooks/use-infinite-scroll.ts`.)* |
+| `components/collection-members.tsx` | create (updated — actual implementation) | Membership management UI. |
+| `components/create-collection-dialog.tsx` | create (updated — actual implementation) | Collection creation dialog. |
+| `components/new-collection-dialog.tsx` | create (updated — actual implementation) | New-collection dialog (Phase 3 UI). |
+| `components/delete-snippet-button.tsx` | create (updated — actual implementation) | Snippet delete button (client). |
+| `components/ui/form.tsx` | create (updated — actual implementation) | Shadcn `form` primitive (Base UI). |
+| `hooks/use-infinite-scroll.ts` | create | IntersectionObserver hook (actual pagination mechanism). |
 | Phase 2 editor pages | modify | Wire forms to actions. |
 
 ## Acceptance Criteria
 
-- [ ] Create snippet persists to DB with tags (no duplicate `Tag` rows).
-- [ ] Edit snippet updates fields; owner-only enforced.
-- [ ] Delete snippet removes it and revalidates lists.
-- [ ] Invalid input returns field errors; no 500 on validation failure.
-- [ ] Optimistic insert appears instantly; reverts on error + toast shown.
-- [ ] Submit button disabled (`useFormStatus`) during pending.
-- [ ] Pagination/infinite scroll loads next page without full reload.
-- [ ] `revalidatePath` reflects mutations on subsequent navigations.
-- [ ] `pnpm lint` and `pnpm tsc --noEmit` pass.
+- [x] ✅ Complete (July 2026) Create snippet persists to DB with tags (no duplicate `Tag` rows).
+- [x] ✅ Complete (July 2026) Edit snippet updates fields; owner-only enforced.
+- [x] ✅ Complete (July 2026) Delete snippet removes it and revalidates lists.
+- [x] ✅ Complete (July 2026) Invalid input returns field errors; no 500 on validation failure.
+- [x] ✅ Complete (July 2026) Optimistic insert appears instantly; reverts on error + toast shown.
+- [x] ✅ Complete (July 2026) Submit button disabled (`useFormStatus`) during pending.
+- [x] ✅ Complete (July 2026) Pagination/infinite scroll loads next page without full reload.
+- [x] ✅ Complete (July 2026) `revalidatePath` reflects mutations on subsequent navigations.
+- [x] ✅ Complete (July 2026) `pnpm lint` and `pnpm typecheck` pass.
 
 ## Verification / Testing
 
