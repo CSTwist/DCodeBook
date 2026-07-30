@@ -89,7 +89,7 @@ with role-based access for personal and team workspaces.
 ### Phase 4 — Polish & Ship
 - [x] ✅ Complete (July 2026) a11y audit, Core Web Vitals, OpenGraph metadata, dark mode
 - [x] ✅ Complete (July 2026) Deploy to Vercel + managed Postgres (prod migrations via `prisma migrate deploy`)
-- [x] ✅ Complete (July 2026) Write retro (`docs/RETRO.md`)
+- [x] ✅ Complete (July 2026) Write retro (`./RETRO.md`)
 
 ## 8. Folder Structure (proposed)
 

@@ -16,4 +16,4 @@ This directory records significant architectural decisions for DCodeBook.
 - One decision per ADR.
 - ADRs are immutable once Accepted (supersede with a new ADR if reversed).
 - Context → Decision → Consequences → Alternatives.
-- All ADRs are derived from the locked planning documents (`../IMPLEMENTATION_PLAN.md` and `./PHASE_0..4_*.md`); they introduce no new requirements that contradict those documents.
+- All ADRs are derived from the locked planning documents (`../MVP_IMPLEMENTATION_PLAN.md` and `../PHASE_0..4_*.md`); they introduce no new requirements that contradict those documents.

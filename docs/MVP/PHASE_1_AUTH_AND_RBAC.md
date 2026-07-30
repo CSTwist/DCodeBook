@@ -1,6 +1,6 @@
 # Phase 1 — Authentication & RBAC
 
-> Part of the [DCodeBook](../IMPLEMENTATION_PLAN.md) implementation docs.
+> Part of the [DCodeBook](./MVP_IMPLEMENTATION_PLAN.md) implementation docs.
 > Builds on [Phase 0 — Setup & Data Modeling](./PHASE_0_SETUP_AND_DATA_MODELING.md).
 > Precedes [Phase 2 — MVP Build](./PHASE_2_MVP_BUILD.md).
 
@@ -409,7 +409,7 @@ Optional automated check (Phase 3 adds full test suite): a tiny script using
 
 ## Cross-references
 
-- Main plan: [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md)
+- Main plan: [MVP_IMPLEMENTATION_PLAN.md](./MVP_IMPLEMENTATION_PLAN.md)
 - Prior: [Phase 0 — Setup & Data Modeling](./PHASE_0_SETUP_AND_DATA_MODELING.md)
 - Next: [Phase 2 — MVP Build](./PHASE_2_MVP_BUILD.md)
 - Uses RBAC in: [Phase 3 — Mutations & UX](./PHASE_3_MUTATIONS_AND_UX.md)

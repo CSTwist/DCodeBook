@@ -3,7 +3,7 @@
 > **Document type:** Test & QA Plan (derived from the SRS and the five phase docs)
 > **Project:** DCodeBook — a real-time full-stack knowledge base & code snippet canvas for developers
 > **Status:** ✅ Complete (July 2026) — the QA strategy is implemented; all phases pass `pnpm lint` + `pnpm typecheck` and the app compiles clean.
-> **Source of truth:** [`../IMPLEMENTATION_PLAN.md`](../IMPLEMENTATION_PLAN.md), [`SRS.md`](./SRS.md), and the phase docs listed in §1.
+> **Source of truth:** [`./MVP_IMPLEMENTATION_PLAN.md`](./MVP_IMPLEMENTATION_PLAN.md), [`SRS.md`](./SRS.md), and the phase docs listed in §1.
 
 ---
 
@@ -35,7 +35,7 @@ It does **not** cover post-MVP features (real-time collaboration, native mobile,
 
 | Ref | Document | Relative path |
 |-----|----------|---------------|
-| [PLAN] | DCodeBook High-Level Implementation Plan | `../IMPLEMENTATION_PLAN.md` |
+| [PLAN] | DCodeBook High-Level Implementation Plan | `./MVP_IMPLEMENTATION_PLAN.md` |
 | [SRS] | Software Requirements Specification | `./SRS.md` |
 | [P0] | Phase 0 — Setup & Data Modeling | `./PHASE_0_SETUP_AND_DATA_MODELING.md` |
 | [P1] | Phase 1 — Authentication & RBAC | `./PHASE_1_AUTH_AND_RBAC.md` |
@@ -505,8 +505,8 @@ A phase is "done" only when its own acceptance criteria ([P0]–[P4]) **and** th
   - [P3] `./PHASE_3_MUTATIONS_AND_UX.md` — Server Actions, Zod, optimistic UI, pagination, revalidation (FR-7/8/10/11/20/21/31…37, NFR-7/8/12, FR-45).
   - [P4] `./PHASE_4_POLISH_AND_SHIP.md` — a11y, CWV, OG metadata, dark mode, deploy, CI (FR-38…43, NFR-1…4/20…23, NFR-6/11/16).
 - **Anonymous-access decision (m0036):** FR-44/45/46 + NFR-24, resolved in [`SRS.md` §3.5.2 / Appendix A (R-6)](./SRS.md); enforced by tests in §6 and §7.
-- **Main plan:** [`../IMPLEMENTATION_PLAN.md`](../IMPLEMENTATION_PLAN.md).
+- **Main plan:** [`./MVP_IMPLEMENTATION_PLAN.md`](./MVP_IMPLEMENTATION_PLAN.md).
 
 ---
 
-*This Test & QA Plan is derived solely from `IMPLEMENTATION_PLAN.md`, `SRS.md`, and `docs/PHASE_0..4_*.md`. It introduces no requirements that contradict those documents and is intended as the QA baseline for the DCodeBook MVP.*
+*This Test & QA Plan is derived solely from `MVP_IMPLEMENTATION_PLAN.md`, `./SRS.md`, and `./PHASE_0..4_*.md`. It introduces no requirements that contradict those documents and is intended as the QA baseline for the DCodeBook MVP.*

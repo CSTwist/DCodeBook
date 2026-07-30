@@ -5,7 +5,7 @@
 > **Status:** ✅ Complete (July 2026) — implemented; all five phases built, 74 source files compile clean.
 
 > **✅ Post-Implementation Notes (July 2026):** The design in this SDD is implemented. Reality vs. plan: Shadcn UI components are built on **`@base-ui/react`** (not Radix UI) and use the `render` prop for composition; client components import `signIn`/`signOut` from `next-auth/react`; Prisma 7 uses `@prisma/adapter-pg` + `pg` via `lib/prisma.ts` with `prisma.config.ts`; `lib/highlight.ts` takes a `dark` param. `updateMemberRole` and the `loadMore` Server Action are **not** implemented (deferred); membership actions live in `actions/collections.ts` and pagination uses `hooks/use-infinite-scroll.ts`. The `/admin` UI route is not implemented. See each phase doc's "Post-Implementation Notes".
-> **Source of truth:** `IMPLEMENTATION_PLAN.md` and the five phase docs under `docs/` (see §1.4), plus the locked decisions captured in the project brief.
+> **Source of truth:** `MVP_IMPLEMENTATION_PLAN.md` and the five phase docs under `docs/MVP/` (see §1.4), plus the locked decisions captured in the project brief.
 
 ---
 
@@ -58,7 +58,7 @@ See the SRS §1.3 glossary (`RSC`, `RBAC`, `OAuth`, `ORM`, `ILIKE`, `GIN`,
 
 | Ref | Document | Relative path |
 |-----|----------|---------------|
-| [PLAN] | DCodeBook High-Level Implementation Plan | `../IMPLEMENTATION_PLAN.md` |
+| [PLAN] | DCodeBook High-Level Implementation Plan | `./MVP_IMPLEMENTATION_PLAN.md` |
 | [SRS] | DCodeBook Software Requirements Specification | `./SRS.md` |
 | [P0] | Phase 0 — Setup & Data Modeling | `./PHASE_0_SETUP_AND_DATA_MODELING.md` |
 | [P1] | Phase 1 — Authentication & RBAC | `./PHASE_1_AUTH_AND_RBAC.md` |
@@ -654,7 +654,7 @@ SDD's modules map onto those phases as:
 - **Phase 4:** `app/layout.tsx` (metadata/lang/theme), `app/opengraph-image.tsx`,
   `app/robots.ts`, `app/sitemap.ts`, `components/theme-toggle.tsx`,
   `components/providers.tsx`, `lib/highlight.ts` (theme-aware), `vercel-build`
-  script, CI workflow, `docs/RETRO.md`.
+  script, CI workflow, `./RETRO.md`.
 
 ---
 
@@ -674,6 +674,6 @@ SDD's modules map onto those phases as:
 
 ---
 
-*This SDD is derived solely from `IMPLEMENTATION_PLAN.md`, `docs/SRS.md`, and
-`docs/PHASE_0..4_*.md`. It introduces no design that contradicts those
+*This SDD is derived solely from `MVP_IMPLEMENTATION_PLAN.md`, `./SRS.md`, and
+`./PHASE_0..4_*.md`. It introduces no design that contradicts those
 documents and is intended as the architectural baseline for the DCodeBook MVP.*

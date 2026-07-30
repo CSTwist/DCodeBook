@@ -39,7 +39,7 @@ The goal is to make the security assumptions explicit *before* implementation, s
 
 | Ref | Document | Relative path |
 |-----|----------|---------------|
-| [PLAN] | DCodeBook High-Level Implementation Plan | `../IMPLEMENTATION_PLAN.md` |
+| [PLAN] | DCodeBook High-Level Implementation Plan | `./MVP_IMPLEMENTATION_PLAN.md` |
 | [SRS] | DCodeBook Software Requirements Specification | `./SRS.md` |
 | [P0] | Phase 0 — Setup & Data Modeling | `./PHASE_0_SETUP_AND_DATA_MODELING.md` |
 | [P1] | Phase 1 — Authentication & RBAC | `./PHASE_1_AUTH_AND_RBAC.md` |
@@ -312,4 +312,4 @@ Risks explicitly accepted for the MVP, with rationale:
 
 ---
 
-*This threat model is derived solely from `IMPLEMENTATION_PLAN.md`, `docs/SRS.md`, and `docs/PHASE_0..4_*.md`. It introduces no new requirements that contradict those documents and is intended as a lightweight, design-time security reference for the DCodeBook MVP.*
+*This threat model is derived solely from `MVP_IMPLEMENTATION_PLAN.md`, `./SRS.md`, and `./PHASE_0..4_*.md`. It introduces no new requirements that contradict those documents and is intended as a lightweight, design-time security reference for the DCodeBook MVP.*

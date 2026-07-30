@@ -4,9 +4,9 @@
 - **Date:** 2026-07-30
 - **Decision Maker:** Chakinzo Sombito (project owner)
 - **References:**
-  - `./PHASE_2_MVP_BUILD.md` §2.3 (Snippet editor with syntax highlighting — Shiki chosen over Prism), §2.7 (Risks — Shiki server-only), §Dependencies & Packages
+  - `../PHASE_2_MVP_BUILD.md` §2.3 (Snippet editor with syntax highlighting — Shiki chosen over Prism), §2.7 (Risks — Shiki server-only), §Dependencies & Packages
   - `../SRS.md` §1.2 (In scope — server-side syntax highlighting, Shiki, zero client JS), §2.2 (Product Functions — Syntax highlighting), FR-13, NFR-1, NFR-10
-  - `./PHASE_4_POLISH_AND_SHIP.md` §4.2 (Core Web Vitals — Shiki server-side, no client JS), §4.4 (Dark mode — Shiki theme sync)
+  - `../PHASE_4_POLISH_AND_SHIP.md` §4.2 (Core Web Vitals — Shiki server-side, no client JS), §4.4 (Dark mode — Shiki theme sync)
 
 ## Context
 

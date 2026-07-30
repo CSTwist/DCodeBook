@@ -4,11 +4,11 @@
 - **Date:** 2026-07-30
 - **Decision Maker:** Chakinzo Sombito (project owner)
 - **References:**
-  - `../../IMPLEMENTATION_PLAN.md` §6 (MVP Feature Scope — PUBLIC collections readable by anyone, including anonymous)
+  - `../MVP_IMPLEMENTATION_PLAN.md` §6 (MVP Feature Scope — PUBLIC collections readable by anyone, including anonymous)
   - `../SRS.md` §1.2 (Out-of-scope note — unauthenticated public browsing of PUBLIC collections IS permitted), §2.3 (User Classes — Unauthenticated visitor), FR-44, FR-45, FR-46, NFR-24, §3.5.2 (RBAC permission matrix), Appendix A (R-6 — DECIDED), Appendix C (Post-MVP — public browsing now in scope)
-  - `./PHASE_1_AUTH_AND_RBAC.md` §1.5 (Public collection read routes NOT gated by middleware), §1.6 (`canViewCollection` — anonymous may READ PUBLIC only)
-  - `./PHASE_2_MVP_BUILD.md` §2.4 (Public browse/search), §2.6 (`listPublicCollections` — anonymous-readable)
-  - `./PHASE_3_MUTATIONS_AND_UX.md` §3.2 (Anonymous requests to Server Actions rejected; read path is RSC, not an action)
+  - `../PHASE_1_AUTH_AND_RBAC.md` §1.5 (Public collection read routes NOT gated by middleware), §1.6 (`canViewCollection` — anonymous may READ PUBLIC only)
+  - `../PHASE_2_MVP_BUILD.md` §2.4 (Public browse/search), §2.6 (`listPublicCollections` — anonymous-readable)
+  - `../PHASE_3_MUTATIONS_AND_UX.md` §3.2 (Anonymous requests to Server Actions rejected; read path is RSC, not an action)
 
 ## Context
 

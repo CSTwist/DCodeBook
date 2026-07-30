@@ -1,6 +1,6 @@
 # Phase 3 — Mutations & UX
 
-> Part of the [DCodeBook](../IMPLEMENTATION_PLAN.md) implementation docs.
+> Part of the [DCodeBook](./MVP_IMPLEMENTATION_PLAN.md) implementation docs.
 > Builds on [Phase 2 — MVP Build](./PHASE_2_MVP_BUILD.md).
 > Precedes [Phase 4 — Polish & Ship](./PHASE_4_POLISH_AND_SHIP.md).
 
@@ -301,7 +301,7 @@ CRUD + RBAC at the action level.
 
 ## Cross-references
 
-- Main plan: [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md)
+- Main plan: [MVP_IMPLEMENTATION_PLAN.md](./MVP_IMPLEMENTATION_PLAN.md)
 - Prior: [Phase 2 — MVP Build](./PHASE_2_MVP_BUILD.md)
 - Auth/RBAC used: [Phase 1](./PHASE_1_AUTH_AND_RBAC.md)
 - Schema foundation: [Phase 0](./PHASE_0_SETUP_AND_DATA_MODELING.md)

@@ -1,10 +1,10 @@
 # Phase 4 — Polish & Ship
 
-> Part of the [DCodeBook](../IMPLEMENTATION_PLAN.md) implementation docs.
+> Part of the [DCodeBook](./MVP_IMPLEMENTATION_PLAN.md) implementation docs.
 > Builds on [Phase 3 — Mutations & UX](./PHASE_3_MUTATIONS_AND_UX.md).
 > Final phase before public launch.
 
-> **✅ Post-Implementation Notes (July 2026):** Phase 4 is complete. Key reality vs. plan: `app/page.tsx` is a simple redirect to `/sign-in` (not the Next.js boilerplate). `package.json` defines `typecheck` (`tsc --noEmit`) and `vercel-build` (`prisma migrate deploy && next build`) scripts and uses pnpm. CI (`.github/workflows/ci.yml`) runs `pnpm prisma generate` → `pnpm lint` → `pnpm typecheck` (not `pnpm tsc --noEmit` directly). Shadcn UI is built on `@base-ui/react` (not Radix UI). `docs/RETRO.md` was written.
+> **✅ Post-Implementation Notes (July 2026):** Phase 4 is complete. Key reality vs. plan: `app/page.tsx` is a simple redirect to `/sign-in` (not the Next.js boilerplate). `package.json` defines `typecheck` (`tsc --noEmit`) and `vercel-build` (`prisma migrate deploy && next build`) scripts and uses pnpm. CI (`.github/workflows/ci.yml`) runs `pnpm prisma generate` → `pnpm lint` → `pnpm typecheck` (not `pnpm tsc --noEmit` directly). Shadcn UI is built on `@base-ui/react` (not Radix UI). `./RETRO.md` was written.
 
 ## Overview / Objective
 
@@ -193,7 +193,7 @@ jobs:
 
 ### 4.8 — Retrospective write-up
 
-Create `docs/RETRO.md` (or `RETROSPECTIVE.md`) covering:
+Create `./RETRO.md` (or `RETROSPECTIVE.md`) covering:
 - What went well (RSC simplicity, Shiki zero-JS, Prisma DX).
 - What was hard (Auth.js v5 beta churn, edge middleware limits, search
   indexing).
@@ -242,7 +242,7 @@ this) so the first paint matches.
 | `components/providers.tsx` | create | `next-themes` provider. |
 | `package.json` | modify | `vercel-build` script. |
 | `.github/workflows/ci.yml` | create | CI lint/typecheck. |
-| `docs/RETRO.md` | create | Retrospective. |
+| `./RETRO.md` | create | Retrospective. |
 
 ## Acceptance Criteria
 
@@ -254,7 +254,7 @@ this) so the first paint matches.
 - [x] ✅ Complete (July 2026) Production deploy succeeds; `migrate deploy` runs in build.
 - [x] ✅ Complete (July 2026) OAuth login works on production domain.
 - [x] ✅ Complete (July 2026) (CI added) PR checks pass lint + typecheck.
-- [x] ✅ Complete (July 2026) Retrospective written (`docs/RETRO.md`).
+- [x] ✅ Complete (July 2026) Retrospective written (`./RETRO.md`).
 
 ## Verification / Testing
 
@@ -294,7 +294,7 @@ vercel deploy --prod
 
 ## Cross-references
 
-- Main plan: [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md)
+- Main plan: [MVP_IMPLEMENTATION_PLAN.md](./MVP_IMPLEMENTATION_PLAN.md)
 - Prior: [Phase 3 — Mutations & UX](./PHASE_3_MUTATIONS_AND_UX.md)
 - Foundation: [Phase 0](./PHASE_0_SETUP_AND_DATA_MODELING.md)
 - Auth: [Phase 1](./PHASE_1_AUTH_AND_RBAC.md)

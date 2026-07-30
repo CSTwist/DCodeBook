@@ -4,8 +4,8 @@
 - **Date:** 2026-07-30
 - **Decision Maker:** Chakinzo Sombito (project owner)
 - **References:**
-  - `./PHASE_0_SETUP_AND_DATA_MODELING.md` §Technical Implementation Notes (schema — `MembershipRole` distinct from global `Role`), §0.5 (Prisma schema)
-  - `../../IMPLEMENTATION_PLAN.md` §5 (Data Model — Membership entity with `role: MembershipRole`)
+  - `../PHASE_0_SETUP_AND_DATA_MODELING.md` §Technical Implementation Notes (schema — `MembershipRole` distinct from global `Role`), §0.5 (Prisma schema)
+  - `../MVP_IMPLEMENTATION_PLAN.md` §5 (Data Model — Membership entity with `role: MembershipRole`)
   - `../SRS.md` §1.3 (RBAC definition), §2.3 (User Classes — global ADMIN vs collection members), §3.4 (Enums: `Role`, `MembershipRole`), FR-25, FR-26, AR-5, AR-6, Appendix B (Glossary — Membership)
 
 ## Context

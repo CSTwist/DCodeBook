@@ -4,8 +4,8 @@
 - **Date:** 2026-07-30
 - **Decision Maker:** Chakinzo Sombito (project owner)
 - **References:**
-  - `../../IMPLEMENTATION_PLAN.md` §4 (Architecture — RBAC via middleware cookie-presence check only; PUBLIC read routes NOT gated)
-  - `./PHASE_1_AUTH_AND_RBAC.md` §1.5 (Middleware route protection — edge RBAC), §1.6 (RBAC helper layer)
+  - `../MVP_IMPLEMENTATION_PLAN.md` §4 (Architecture — RBAC via middleware cookie-presence check only; PUBLIC read routes NOT gated)
+  - `../PHASE_1_AUTH_AND_RBAC.md` §1.5 (Middleware route protection — edge RBAC), §1.6 (RBAC helper layer)
   - `../SRS.md` §2.5 (Design & Implementation Constraints — Edge middleware cannot query the database), FR-6, FR-27, AR-3, AR-4, NFR-5, Appendix A (R-5)
 
 ## Context

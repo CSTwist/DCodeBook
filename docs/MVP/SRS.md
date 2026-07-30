@@ -5,7 +5,7 @@
 > **Status:** ✅ Complete (July 2026) — implemented; all five phases (0–4) built, 74 source files compile clean (`tsc` 0 errors, `eslint` 0 errors / 0 warnings).
 
 > **✅ Post-Implementation Notes (July 2026):** The requirements in this SRS are fully implemented. Reality vs. plan worth flagging: Shadcn UI components are built on **`@base-ui/react`** (not Radix UI); client components import `signIn`/`signOut` from `next-auth/react` (not `@/lib/auth`); Prisma 7 uses `@prisma/adapter-pg` + `pg` via `lib/prisma.ts` with `prisma.config.ts`; `lib/highlight.ts` takes a `dark` param; `updateMemberRole` and the `loadMore` Server Action are **not** implemented (deferred — membership actions live in `actions/collections.ts`; pagination uses `hooks/use-infinite-scroll.ts`); the `/admin` UI route is not implemented (`requireAdmin` exists but is unused by any route). See each phase doc's "Post-Implementation Notes".
-> **Source of truth:** `IMPLEMENTATION_PLAN.md` and the five phase docs under `docs/` (see §1.4)
+> **Source of truth:** `MVP_IMPLEMENTATION_PLAN.md` and the five phase docs under `docs/MVP/` (see §1.4)
 
 ---
 
@@ -73,7 +73,7 @@ The SRS is the authoritative requirements baseline for the five-phase delivery p
 
 | Ref | Document | Relative path |
 |-----|----------|---------------|
-| [PLAN] | DCodeBook High-Level Implementation Plan | `../IMPLEMENTATION_PLAN.md` |
+| [PLAN] | DCodeBook High-Level Implementation Plan | `./MVP_IMPLEMENTATION_PLAN.md` |
 | [P0] | Phase 0 — Setup & Data Modeling | `./PHASE_0_SETUP_AND_DATA_MODELING.md` |
 | [P1] | Phase 1 — Authentication & RBAC | `./PHASE_1_AUTH_AND_RBAC.md` |
 | [P2] | Phase 2 — MVP Build | `./PHASE_2_MVP_BUILD.md` |
@@ -451,4 +451,4 @@ Maps each major requirement group / key IDs to the phase(s) that implement them.
 
 ---
 
-*This SRS is derived solely from `IMPLEMENTATION_PLAN.md` and `docs/PHASE_0..4_*.md`. It introduces no new requirements that contradict those documents and is intended as the requirements baseline for the DCodeBook MVP.*
+*This SRS is derived solely from `MVP_IMPLEMENTATION_PLAN.md` and `./PHASE_0..4_*.md`. It introduces no new requirements that contradict those documents and is intended as the requirements baseline for the DCodeBook MVP.*

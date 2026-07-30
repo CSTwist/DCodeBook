@@ -4,8 +4,8 @@
 - **Date:** 2026-07-30
 - **Decision Maker:** Chakinzo Sombito (project owner)
 - **References:**
-  - `../../IMPLEMENTATION_PLAN.md` §3 (Tech Stack — Auth), §9 (Risks & Open Decisions — Auth provider)
-  - `./PHASE_1_AUTH_AND_RBAC.md` §1.1 (Auth provider decision), §1.3 (Auth.js configuration), §1.4 (Session in RSC/Server Actions)
+  - `../MVP_IMPLEMENTATION_PLAN.md` §3 (Tech Stack — Auth), §9 (Risks & Open Decisions — Auth provider)
+  - `../PHASE_1_AUTH_AND_RBAC.md` §1.1 (Auth provider decision), §1.3 (Auth.js configuration), §1.4 (Session in RSC/Server Actions)
   - `../SRS.md` §1.3 (Definitions: MAU, Prisma Adapter), §2.5 (Design & Implementation Constraints — Auth.js v5 is beta), §3.5.1 (AR-1, AR-2), Appendix A (R-1)
 
 ## Context

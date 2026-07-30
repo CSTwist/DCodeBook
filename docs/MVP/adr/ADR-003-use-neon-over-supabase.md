@@ -4,10 +4,10 @@
 - **Date:** 2026-07-30
 - **Decision Maker:** Chakinzo Sombito (project owner)
 - **References:**
-  - `../../IMPLEMENTATION_PLAN.md` §3 (Tech Stack — Database: "PostgreSQL (Supabase or Neon)"), §2.4 (Operating Environment — Neon soft-preferred)
-  - `./PHASE_0_SETUP_AND_DATA_MODELING.md` §0.4 (Database provider decision — Neon vs Supabase)
+  - `../MVP_IMPLEMENTATION_PLAN.md` §3 (Tech Stack — Database: "PostgreSQL (Supabase or Neon)"), §2.4 (Operating Environment — Neon soft-preferred)
+  - `../PHASE_0_SETUP_AND_DATA_MODELING.md` §0.4 (Database provider decision — Neon vs Supabase)
   - `../SRS.md` §1.3 (Definitions: Neon / Supabase — "Neon is soft-preferred"), §2.4 (Operating Environment), NFR-16, NFR-11, Appendix A (R-4)
-  - `./PHASE_4_POLISH_AND_SHIP.md` §4.6 (Production environment & deploy — Vercel + Neon)
+  - `../PHASE_4_POLISH_AND_SHIP.md` §4.6 (Production environment & deploy — Vercel + Neon)
 
 ## Context
 

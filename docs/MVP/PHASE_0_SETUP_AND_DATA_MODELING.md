@@ -1,6 +1,6 @@
 # Phase 0 — Setup & Data Modeling
 
-> Part of the [DCodeBook](../IMPLEMENTATION_PLAN.md) implementation docs.
+> Part of the [DCodeBook](./MVP_IMPLEMENTATION_PLAN.md) implementation docs.
 > Precedes [Phase 1 — Auth & RBAC](./PHASE_1_AUTH_AND_RBAC.md).
 
 > **✅ Post-Implementation Notes (July 2026):** Phase 0 is complete. Key reality vs. plan: Prisma 7 moved the `datasource url`/`directUrl` out of `schema.prisma` into `prisma.config.ts`; the runtime uses `@prisma/adapter-pg` + `pg` via `lib/prisma.ts` (see updated snippet below). `next-themes` was installed in Phase 0. Shadcn UI components are built on **`@base-ui/react`**, *not* Radix UI. `pnpm typecheck` (`tsc --noEmit`) and `pnpm vercel-build` (`prisma migrate deploy && next build`) scripts exist. Migrations use `prisma migrate deploy` for prod (not `migrate dev`). `@auth/prisma-adapter` is a separate dependency added in Phase 1 (not in Phase 0's install list).
@@ -520,7 +520,7 @@ Manual checks:
 
 ## Cross-references
 
-- Main plan: [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md)
+- Main plan: [MVP_IMPLEMENTATION_PLAN.md](./MVP_IMPLEMENTATION_PLAN.md)
 - Next: [Phase 1 — Auth & RBAC](./PHASE_1_AUTH_AND_RBAC.md)
 - Build on this: [Phase 2 — MVP Build](./PHASE_2_MVP_BUILD.md)
 - Mutations: [Phase 3 — Mutations & UX](./PHASE_3_MUTATIONS_AND_UX.md)

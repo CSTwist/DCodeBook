@@ -1,6 +1,6 @@
 # Phase 2 — MVP Build
 
-> Part of the [DCodeBook](../IMPLEMENTATION_PLAN.md) implementation docs.
+> Part of the [DCodeBook](./MVP_IMPLEMENTATION_PLAN.md) implementation docs.
 > Builds on [Phase 1 — Auth & RBAC](./PHASE_1_AUTH_AND_RBAC.md).
 > Precedes [Phase 3 — Mutations & UX](./PHASE_3_MUTATIONS_AND_UX.md).
 
@@ -341,7 +341,7 @@ pnpm dev
 
 ## Cross-references
 
-- Main plan: [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md)
+- Main plan: [MVP_IMPLEMENTATION_PLAN.md](./MVP_IMPLEMENTATION_PLAN.md)
 - Prior: [Phase 1 — Auth & RBAC](./PHASE_1_AUTH_AND_RBAC.md)
 - Next: [Phase 3 — Mutations & UX](./PHASE_3_MUTATIONS_AND_UX.md)
 - Search/index foundation: [Phase 0](./PHASE_0_SETUP_AND_DATA_MODELING.md)

@@ -3,7 +3,7 @@
 > **Document type:** API / Server Action Contract (the security boundary)
 > **Project:** DCodeBook — a real-time full-stack knowledge base & code snippet canvas for developers
 > **Status:** ✅ Complete (July 2026) — implemented; all Server Actions present except `updateMemberRole` (deferred) and `loadMore` (replaced by client-side infinite scroll).
-> **Source of truth:** [`IMPLEMENTATION_PLAN.md`](../IMPLEMENTATION_PLAN.md) and the five phase docs under `docs/` (see §1.4)
+> **Source of truth:** [`MVP_IMPLEMENTATION_PLAN.md`](./MVP_IMPLEMENTATION_PLAN.md) and the five phase docs under `docs/MVP/` (see §1.4)
 
 ---
 
@@ -42,13 +42,13 @@ Reads (snippet/collection/tag viewing and search) are **not** Server Actions —
 
 ### 1.3 Why there is no OpenAPI / REST spec
 
-Server Actions are invoked by the Next.js framework over the same-origin POST that renders the calling route; they are not addressable REST endpoints and do not emit an OpenAPI document. The contract here is expressed as prose + Zod schemas + TypeScript result types instead of an OpenAPI YAML. This is consistent with the locked decision in [`IMPLEMENTATION_PLAN.md`](../IMPLEMENTATION_PLAN.md) §4 ("Server Actions for mutations") and SRS §3.1.2 / FR-31.
+Server Actions are invoked by the Next.js framework over the same-origin POST that renders the calling route; they are not addressable REST endpoints and do not emit an OpenAPI document. The contract here is expressed as prose + Zod schemas + TypeScript result types instead of an OpenAPI YAML. This is consistent with the locked decision in [`MVP_IMPLEMENTATION_PLAN.md`](./MVP_IMPLEMENTATION_PLAN.md) §4 ("Server Actions for mutations") and SRS §3.1.2 / FR-31.
 
 ### 1.4 References
 
 | Ref | Document | Relative path |
 |-----|----------|---------------|
-| [PLAN] | DCodeBook High-Level Implementation Plan | [`../IMPLEMENTATION_PLAN.md`](../IMPLEMENTATION_PLAN.md) |
+| [PLAN] | DCodeBook High-Level Implementation Plan | [`./MVP_IMPLEMENTATION_PLAN.md`](./MVP_IMPLEMENTATION_PLAN.md) |
 | [SRS] | Software Requirements Specification | [`./SRS.md`](./SRS.md) |
 | [P0] | Phase 0 — Setup & Data Modeling | [`./PHASE_0_SETUP_AND_DATA_MODELING.md`](./PHASE_0_SETUP_AND_DATA_MODELING.md) |
 | [P1] | Phase 1 — Authentication & RBAC | [`./PHASE_1_AUTH_AND_RBAC.md`](./PHASE_1_AUTH_AND_RBAC.md) |
@@ -577,4 +577,4 @@ The table below is the contract's summary of the SRS §3.5.2 matrix, focused on 
 
 ---
 
-*This contract is derived solely from `IMPLEMENTATION_PLAN.md` and `docs/PHASE_0..4_*.md` / `SRS.md`. It introduces no requirements that contradict those documents and is intended as the API/Server-Action baseline for the DCodeBook MVP.*
+*This contract is derived solely from `MVP_IMPLEMENTATION_PLAN.md` and `./PHASE_0..4_*.md` / `./SRS.md`. It introduces no requirements that contradict those documents and is intended as the API/Server-Action baseline for the DCodeBook MVP.*
