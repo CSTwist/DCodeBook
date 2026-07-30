@@ -17,7 +17,11 @@ export async function listVisibleCollections(userId: string) {
 export async function listPublicCollections() {
   return prisma.collection.findMany({
     where: { visibility: "PUBLIC" },
-    include: { _count: { select: { snippets: true } } },
+    include: {
+      _count: { select: { snippets: true } },
+      owner: { select: { name: true, image: true } },
+    },
     orderBy: { updatedAt: "desc" },
+    take: 20,
   });
 }
