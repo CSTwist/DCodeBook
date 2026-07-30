@@ -54,17 +54,17 @@ export default async function DashboardPage() {
       return tag ? { id: tag.id, name: tag.name, count: agg._count.tagId } : null;
     })
     .filter(
-      (t): t is { id: string; name: string; count: number } => t !== null,
+      (t: unknown): t is { id: string; name: string; count: number } => t !== null,
     );
 
   const totalLanguageCount = languageBreakdown.reduce(
-    (sum, l) => sum + l._count.language,
+    (sum: number, l: { language: string; _count: { language: number } }) => sum + l._count.language,
     0,
   );
   const maxTagCount =
-    popularTags.length > 0 ? Math.max(...popularTags.map((t) => t.count)) : 0;
+    popularTags.length > 0 ? Math.max(...popularTags.map((t: { id: string; name: string; count: number }) => t.count)) : 0;
   const minTagCount =
-    popularTags.length > 0 ? Math.min(...popularTags.map((t) => t.count)) : 0;
+    popularTags.length > 0 ? Math.min(...popularTags.map((t: { id: string; name: string; count: number }) => t.count)) : 0;
 
   const barColors = [
     "bg-primary",
@@ -142,7 +142,7 @@ export default async function DashboardPage() {
             {languageBreakdown.length === 0 ? (
               <p className="text-sm text-muted-foreground">No snippets yet.</p>
             ) : (
-              languageBreakdown.map((lang, i) => {
+              languageBreakdown.map((lang: { language: string; _count: { language: number } }, i: number) => {
                 const percent =
                   totalLanguageCount > 0
                     ? (lang._count.language / totalLanguageCount) * 100
@@ -177,7 +177,7 @@ export default async function DashboardPage() {
               <p className="text-sm text-muted-foreground">No tags yet.</p>
             ) : (
               <div className="flex flex-wrap items-center gap-2">
-                {popularTags.map((tag) => {
+                {popularTags.map((tag: { id: string; name: string; count: number }) => {
                   const range = maxTagCount - minTagCount || 1;
                   const scale = (tag.count - minTagCount) / range;
                   const fontSize = 0.75 + scale * 0.75;
