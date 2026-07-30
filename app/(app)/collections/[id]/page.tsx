@@ -147,7 +147,7 @@ export default async function CollectionPage({ params }: Props) {
                     )}
                     {snippet.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
-                        {snippet.tags.slice(0, 3).map(({ tag: t }) => (
+                        {snippet.tags.slice(0, 3).map(({ tag: t }: { tag: { id: string; name: string } }) => (
                           <Badge key={t.id} variant="outline">
                             {t.name}
                           </Badge>

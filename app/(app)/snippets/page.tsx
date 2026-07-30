@@ -72,7 +72,7 @@ export default async function SnippetsPage({ searchParams }: Props) {
   });
   const languages = languageGroups
     .map((g: { language: string }) => g.language)
-    .filter((l): l is string => Boolean(l));
+    .filter((l: unknown): l is string => Boolean(l));
 
   const [totalSnippets, snippets, tags] = await Promise.all([
     prisma.snippet.count({ where: whereClause }),
@@ -193,7 +193,7 @@ export default async function SnippetsPage({ searchParams }: Props) {
                       </p>
                       {snippet.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1">
-                          {snippet.tags.map(({ tag: t }) => (
+                          {snippet.tags.map(({ tag: t }: { tag: { id: string; name: string } }) => (
                             <Badge key={t.id} variant="outline">
                               {t.name}
                             </Badge>

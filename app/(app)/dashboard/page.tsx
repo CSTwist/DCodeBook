@@ -232,7 +232,7 @@ export default async function DashboardPage() {
                       </p>
                     </div>
                     <div className="flex gap-1">
-                      {snippet.tags.slice(0, 3).map(({ tag }) => (
+                      {snippet.tags.slice(0, 3).map(({ tag }: { tag: { id: string; name: string } }) => (
                         <Badge key={tag.id} variant="secondary">
                           {tag.name}
                         </Badge>

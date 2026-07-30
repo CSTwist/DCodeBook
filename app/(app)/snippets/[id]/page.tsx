@@ -83,7 +83,7 @@ export default async function SnippetPage({ params }: Props) {
       </div>
       {snippet.tags.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {snippet.tags.map(({ tag }) => (<Badge key={tag.id}>{tag.name}</Badge>))}
+          {snippet.tags.map(({ tag }: { tag: { id: string; name: string } }) => (<Badge key={tag.id}>{tag.name}</Badge>))}
         </div>
       )}
       {snippet.collection && (
