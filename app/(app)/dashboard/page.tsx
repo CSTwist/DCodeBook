@@ -50,7 +50,7 @@ export default async function DashboardPage() {
   const tagRecords = await prisma.tag.findMany({ where: { id: { in: tagIds } } });
   const popularTags = popularTagAgg
     .map((agg: { tagId: string; _count: { tagId: number } }) => {
-      const tag = tagRecords.find((t) => t.id === agg.tagId);
+      const tag = tagRecords.find((t: { id: string; name: string }) => t.id === agg.tagId);
       return tag ? { id: tag.id, name: tag.name, count: agg._count.tagId } : null;
     })
     .filter(
