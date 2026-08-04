@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, type UseFormSetError, type FieldValues, type FieldPath } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -75,6 +75,41 @@ interface SnippetFormProps {
   defaultCollectionId?: string;
 }
 
+function handleActionError<T extends FieldValues>(
+  resError: unknown,
+  setError: UseFormSetError<T>,
+  fieldMap?: Record<string, FieldPath<T>>,
+  fallbackMessage = "An error occurred"
+) {
+  if (typeof resError === "object" && resError !== null) {
+    const fieldErrors = resError as Record<string, string[]>;
+    let hasSetFieldError = false;
+    for (const [field, messages] of Object.entries(fieldErrors)) {
+      if (Array.isArray(messages) && messages.length > 0) {
+        const targetField = (fieldMap?.[field] ?? field) as FieldPath<T>;
+        setError(targetField, {
+          type: "server",
+          message: messages.join(", "),
+        });
+        hasSetFieldError = true;
+      }
+    }
+    if (!hasSetFieldError) {
+      toast.error(fallbackMessage);
+    }
+  } else if (typeof resError === "string") {
+    if (resError === "NOT_FOUND") {
+      toast.error("Snippet not found");
+    } else if (resError === "FORBIDDEN") {
+      toast.error("You do not have permission to perform this action");
+    } else {
+      toast.error(resError);
+    }
+  } else {
+    toast.error(fallbackMessage);
+  }
+}
+
 export function SnippetForm({
   snippet,
   collections = [],
@@ -94,7 +129,7 @@ export function SnippetForm({
       code: snippet?.code ?? "",
       language: snippet?.language ?? "typescript",
       tags: defaultTags,
-      collectionId: snippet?.collectionId ?? defaultCollectionId ?? "",
+      collectionId: snippet?.collectionId ?? defaultCollectionId ?? "none",
     },
   });
 
@@ -107,7 +142,7 @@ export function SnippetForm({
       }
       formData.append("code", values.code);
       formData.append("language", values.language);
-      if (values.collectionId) {
+      if (values.collectionId && values.collectionId !== "none") {
         formData.append("collectionId", values.collectionId);
       }
 
@@ -123,24 +158,34 @@ export function SnippetForm({
         if (snippet) {
           const res = await updateSnippet(snippet.id, formData);
           if (res?.error) {
-            toast.error(typeof res.error === "string" ? res.error : "Failed to update snippet");
+            handleActionError(
+              res.error,
+              form.setError,
+              { tagNames: "tags" },
+              "Failed to update snippet"
+            );
           } else {
             toast.success("Snippet updated successfully");
             router.push(`/snippets/${snippet.id}`);
             router.refresh();
           }
         } else {
-          const res = await createSnippet(formData) as Record<string, unknown> | undefined;
+          const res = (await createSnippet(formData)) as Record<string, unknown> | undefined;
           if (res && "error" in res) {
-            toast.error(typeof res.error === "string" ? (res.error as string) : "Failed to create snippet");
+            handleActionError(
+              res.error,
+              form.setError,
+              { tagNames: "tags" },
+              "Failed to create snippet"
+            );
           } else if (res && "snippetId" in res) {
             toast.success("Snippet created successfully");
             router.push(`/snippets/${res.snippetId as string}`);
             router.refresh();
           }
         }
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "An error occurred");
+      } catch {
+        toast.error("An unexpected error occurred. Please try again.");
       }
     });
   }
@@ -209,11 +254,12 @@ export function SnippetForm({
               <FormItem>
                 <FormLabel>Collection</FormLabel>
                 <FormControl>
-                  <Select value={field.value || ""} onValueChange={field.onChange}>
+                  <Select value={field.value || "none"} onValueChange={field.onChange}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="None (Standalone)" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">None (Standalone)</SelectItem>
                       {collections.map((col) => (
                         <SelectItem key={col.id} value={col.id}>
                           {col.name}
@@ -283,3 +329,4 @@ export function SnippetForm({
     </Form>
   );
 }
+
