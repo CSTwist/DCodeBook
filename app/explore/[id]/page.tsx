@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { highlight } from "@/lib/highlight";
 import { VisibilityBadge } from "@/components/visibility-badge";
@@ -12,7 +13,10 @@ import { ArrowLeft, FolderOpen } from "lucide-react";
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ page?: string }>;
 }
+
+const PAGE_SIZE = 10;
 
 function initials(name?: string | null) {
   if (!name) return "?";
@@ -43,8 +47,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ExploreCollectionPage({ params }: Props) {
+export default async function ExploreCollectionPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { page: pageStr } = await searchParams;
+  const page = Math.max(1, parseInt(pageStr ?? "1", 10) || 1);
 
   const collection = await prisma.collection.findFirst({
     where: { id, visibility: "PUBLIC" },
@@ -54,16 +60,25 @@ export default async function ExploreCollectionPage({ params }: Props) {
       snippets: {
         include: { tags: { include: { tag: true } } },
         orderBy: { updatedAt: "desc" },
+        take: PAGE_SIZE,
+        skip: (page - 1) * PAGE_SIZE,
       },
     },
   });
 
   if (!collection) notFound();
 
+  const totalSnippets = collection._count.snippets;
+  const totalPages = Math.ceil(totalSnippets / PAGE_SIZE) || 1;
+
+  const cookieStore = await cookies();
+  const themeCookie = cookieStore.get("theme")?.value;
+  const dark = themeCookie === "dark";
+
   const previews = await Promise.all(
     collection.snippets.map(async (snippet: { id: string; title: string; code: string; language: string; description: string | null; tags: Array<{ tag: { id: string; name: string } }> }) => ({
       snippet,
-      html: await highlight(snippet.code.slice(0, 500), snippet.language, true),
+      html: await highlight(snippet.code.slice(0, 500), snippet.language, dark),
     }))
   );
 
@@ -104,8 +119,8 @@ export default async function ExploreCollectionPage({ params }: Props) {
             </span>
             <span className="text-sm text-muted-foreground">·</span>
             <span className="text-sm text-muted-foreground">
-              {collection._count.snippets} snippet
-              {collection._count.snippets !== 1 ? "s" : ""}
+              {totalSnippets} snippet
+              {totalSnippets !== 1 ? "s" : ""}
             </span>
           </div>
         </section>
@@ -118,46 +133,81 @@ export default async function ExploreCollectionPage({ params }: Props) {
               </CardContent>
             </Card>
           ) : (
-            previews.map(({ snippet, html }) => (
-              <Card key={snippet.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-base">{snippet.title}</CardTitle>
-                    <Badge variant="outline">{snippet.language}</Badge>
-                  </div>
-                  {snippet.description && (
-                    <p className="text-sm text-muted-foreground">
-                      {snippet.description}
-                    </p>
-                  )}
-                  {snippet.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {snippet.tags.map(({ tag: t }: { tag: { id: string; name: string } }) => (
-                        <Badge key={t.id} variant="secondary">
-                          {t.name}
-                        </Badge>
-                      ))}
+            <>
+              {previews.map(({ snippet, html }) => (
+                <Card key={snippet.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-2">
+                      <Link href={`/explore/snippets/${snippet.id}`} className="hover:underline">
+                        <CardTitle className="text-base">{snippet.title}</CardTitle>
+                      </Link>
+                      <Badge variant="outline">{snippet.language}</Badge>
                     </div>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <div
-                    className="overflow-hidden rounded-lg text-sm [&_pre]:overflow-x-auto [&_pre]:p-3"
-                    dangerouslySetInnerHTML={{ __html: html }}
-                  />
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    Showing a preview.{" "}
-                    <Link
-                      href="/sign-in"
-                      className="text-primary underline-offset-4 hover:underline"
-                    >
-                      Sign in to save this snippet
-                    </Link>
-                    .
-                  </p>
-                </CardContent>
-              </Card>
-            ))
+                    {snippet.description && (
+                      <p className="text-sm text-muted-foreground">
+                        {snippet.description}
+                      </p>
+                    )}
+                    {snippet.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {snippet.tags.map(({ tag: t }: { tag: { id: string; name: string } }) => (
+                          <Badge key={t.id} variant="secondary">
+                            {t.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <div
+                      className="overflow-hidden rounded-lg text-sm [&_pre]:overflow-x-auto [&_pre]:p-3"
+                      dangerouslySetInnerHTML={{ __html: html }}
+                    />
+                    <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                      <span>
+                        Showing preview.{" "}
+                        <Link
+                          href={`/explore/snippets/${snippet.id}`}
+                          className="text-primary underline-offset-4 hover:underline font-medium"
+                        >
+                          View full snippet
+                        </Link>
+                      </span>
+                      <Link
+                        href="/sign-in"
+                        className="text-primary underline-offset-4 hover:underline"
+                      >
+                        Sign in to save
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page <= 1}
+                    render={page > 1 ? <Link href={`/explore/${id}?page=${page - 1}`} /> : undefined}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Page {page} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page >= totalPages}
+                    render={page < totalPages ? <Link href={`/explore/${id}?page=${page + 1}`} /> : undefined}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </section>
       </div>

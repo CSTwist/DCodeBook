@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, type UseFormSetError, type FieldValues, type Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { collectionSchema, type CollectionInput } from "@/lib/validations";
 import { createCollection, updateCollection } from "@/actions/collections";
@@ -39,6 +39,39 @@ interface CollectionFormProps {
   onSuccess?: () => void;
 }
 
+function handleActionError<T extends FieldValues>(
+  resError: unknown,
+  setError: UseFormSetError<T>,
+  fallbackMessage = "An error occurred"
+) {
+  if (typeof resError === "object" && resError !== null) {
+    const fieldErrors = resError as Record<string, string[]>;
+    let hasSetFieldError = false;
+    for (const [field, messages] of Object.entries(fieldErrors)) {
+      if (Array.isArray(messages) && messages.length > 0) {
+        setError(field as Path<T>, {
+          type: "server",
+          message: messages.join(", "),
+        });
+        hasSetFieldError = true;
+      }
+    }
+    if (!hasSetFieldError) {
+      toast.error(fallbackMessage);
+    }
+  } else if (typeof resError === "string") {
+    if (resError === "NOT_FOUND") {
+      toast.error("Collection not found");
+    } else if (resError === "FORBIDDEN") {
+      toast.error("You do not have permission to perform this action");
+    } else {
+      toast.error(resError);
+    }
+  } else {
+    toast.error(fallbackMessage);
+  }
+}
+
 export function CollectionForm({ collection, onSuccess }: CollectionFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -65,24 +98,24 @@ export function CollectionForm({ collection, onSuccess }: CollectionFormProps) {
         if (collection) {
           const res = await updateCollection(collection.id, formData);
           if (res?.error) {
-            toast.error(typeof res.error === "string" ? res.error : "Failed to update collection");
+            handleActionError(res.error, form.setError, "Failed to update collection");
           } else {
             toast.success("Collection updated successfully");
             if (onSuccess) onSuccess();
             router.refresh();
           }
         } else {
-          const res = await createCollection(formData) as Record<string, unknown> | undefined;
+          const res = (await createCollection(formData)) as Record<string, unknown> | undefined;
           if (res && "error" in res) {
-            toast.error(typeof res.error === "string" ? (res.error as string) : "Failed to create collection");
+            handleActionError(res.error, form.setError, "Failed to create collection");
           } else if (res && "collectionId" in res) {
             toast.success("Collection created successfully");
             if (onSuccess) onSuccess();
             router.refresh();
           }
         }
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "An error occurred");
+      } catch {
+        toast.error("An unexpected error occurred. Please try again.");
       }
     });
   }
@@ -135,6 +168,16 @@ export function CollectionForm({ collection, onSuccess }: CollectionFormProps) {
                 </SelectContent>
               </Select>
             </FormControl>
+            {field.value === "PUBLIC" && (
+              <p className="text-xs text-amber-600 dark:text-amber-500 font-medium mt-1.5">
+                Note: PUBLIC collections are readable by anonymous users and indexable by search engines.
+              </p>
+            )}
+            {collection?.visibility === "PUBLIC" && field.value !== "PUBLIC" && (
+              <p className="text-xs text-destructive font-medium mt-1.5">
+                Warning: Leaving PUBLIC will invalidate public links to this collection and its snippets.
+              </p>
+            )}
             <FormMessage />
           </FormItem>
         )}

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { canViewCollection, canEditCollection } from "@/lib/rbac";
+import { canViewCollection, canEditCollection, canManageCollectionMembers } from "@/lib/rbac";
 import { VisibilityBadge } from "@/components/visibility-badge";
 import { CollectionMembers } from "@/components/collection-members";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import Link from "next/link";
+import { EditCollectionDialog } from "@/components/edit-collection-dialog";
+import { DeleteCollectionButton } from "@/components/delete-collection-button";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, FolderOpen } from "lucide-react";
 
@@ -66,8 +68,12 @@ export default async function CollectionPage({ params }: Props) {
     notFound();
   }
 
+  const isOwner = session?.user?.id === collection.ownerId;
   const canEdit = session?.user?.id
     ? await canEditCollection(id, session.user.id)
+    : false;
+  const canManageMembers = session?.user?.id
+    ? await canManageCollectionMembers(id, session.user.id)
     : false;
 
   return (
@@ -86,18 +92,24 @@ export default async function CollectionPage({ params }: Props) {
       >
         <ArrowLeft className="h-4 w-4" />
       </Button>
-      <div>
-        <div className="flex items-center gap-3">
-          <FolderOpen className="h-6 w-6" />
-          <h1 className="text-2xl font-bold">{collection.name}</h1>
-          <VisibilityBadge visibility={collection.visibility} />
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <FolderOpen className="h-6 w-6" />
+            <h1 className="text-2xl font-bold">{collection.name}</h1>
+            <VisibilityBadge visibility={collection.visibility} />
+          </div>
+          {collection.description && (
+            <p className="mt-2 text-muted-foreground">{collection.description}</p>
+          )}
+          <p className="mt-1 text-sm text-muted-foreground">
+            by {collection.owner.name ?? "Unknown"}
+          </p>
         </div>
-        {collection.description && (
-          <p className="mt-2 text-muted-foreground">{collection.description}</p>
-        )}
-        <p className="mt-1 text-sm text-muted-foreground">
-          by {collection.owner.name ?? "Unknown"}
-        </p>
+        <div className="flex items-center gap-2">
+          {canEdit && <EditCollectionDialog collection={collection} />}
+          {isOwner && <DeleteCollectionButton collectionId={id} />}
+        </div>
       </div>
 
       {collection.visibility === "TEAM" && (
@@ -105,6 +117,9 @@ export default async function CollectionPage({ params }: Props) {
           collectionId={id}
           members={collection.memberships}
           canEdit={canEdit}
+          canManageMembers={canManageMembers}
+          currentUserId={session?.user?.id}
+          ownerId={collection.ownerId}
         />
       )}
 
