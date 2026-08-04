@@ -99,11 +99,19 @@ See [`docs/`](docs/) for full planning documentation including the SRS, design s
 
 | Variable | Required | Description |
 |---|---|---|
-| `DATABASE_URL` | Yes | Pooled Postgres URL for the app runtime |
-| `DATABASE_URL_DIRECT` | Yes | Direct Postgres URL for migrations |
-| `AUTH_SECRET` | Phase 1 | Auth.js session secret (`npx auth secret`) |
-| `AUTH_GITHUB_ID` | Phase 1 | GitHub OAuth app client ID |
-| `AUTH_GITHUB_SECRET` | Phase 1 | GitHub OAuth app client secret |
-| `AUTH_GOOGLE_ID` | Phase 1 | Google OAuth client ID |
-| `AUTH_GOOGLE_SECRET` | Phase 1 | Google OAuth client secret |
-| `NEXT_PUBLIC_APP_URL` | No | App URL (defaults to `http://localhost:3000`) |
+| `DATABASE_URL` | Yes | Pooled Postgres URL for app runtime (use `sslmode=verify-full` for new Neon URLs) |
+| `DATABASE_URL_DIRECT` | Yes | Direct Postgres URL for migrations (use `sslmode=verify-full` for new Neon URLs) |
+| `AUTH_SECRET` | Yes | Auth.js session secret (`npx auth secret`) |
+| `AUTH_GITHUB_ID` | Yes | GitHub OAuth app client ID |
+| `AUTH_GITHUB_SECRET` | Yes | GitHub OAuth app client secret |
+| `AUTH_GOOGLE_ID` | Yes | Google OAuth client ID |
+| `AUTH_GOOGLE_SECRET` | Yes | Google OAuth client secret |
+| `AUTH_URL` | No | Explicit Auth URL for non-Vercel / custom proxy deployments |
+| `AUTH_TRUST_HOST` | No | Set to `true` when behind a reverse proxy or non-Vercel host |
+| `NEXT_PUBLIC_APP_URL` | Required in prod | App URL (required for production / custom hosts; defaults to `http://localhost:3000` in local development) |
+
+
+## Public Discovery & Access Rules
+
+- **Public Collections:** Collections with `visibility: PUBLIC` and their contained snippets are viewable by anyone (including unauthenticated/anonymous users) via `/explore`.
+- **Standalone Snippets:** Standalone snippets (snippets not assigned to any collection or assigned to a non-public collection) are intentionally not publicly discoverable; only snippets residing within `PUBLIC` collections are public.

@@ -245,12 +245,11 @@ For each action: **name**, **file**, **Zod input**, **output `data`**, **auth re
 - **RBAC check:**
   - `requireUser()` (step 1).
   - Load the snippet; if `snippet.ownerId === user.id` → allowed.
-  - Else if the snippet has a `collectionId` and `canEditCollection(collectionId, user.id)` is `true` → allowed (collection `EDITOR`/`ADMIN` may edit snippets within the collection).
-  - Otherwise `FORBIDDEN`. (A plain `TEAM` `VIEWER` may not edit; another user's privately-owned snippet is `FORBIDDEN`.)
+  - Otherwise `FORBIDDEN`. (Per FR-10 authoritative, only the snippet owner may update a snippet or reassign its `collectionId`; collection `EDITOR`/`ADMIN` members cannot edit another user's snippet.)
 - **Prisma mutation:** `prisma.snippet.update({ where: { id }, data: { ...providedFields, tags: { ... } } })`. Tag array is reconciled via `connectOrCreate` (and disconnect of removed tags) keyed on `Tag.name`.
 - **Output `data`:** `{ snippetId: string }`.
 - **Revalidate triggers:** `revalidatePath("/snippets")`, `revalidatePath("/snippets/" + id)`, `revalidatePath("/dashboard")`, and `revalidatePath("/collections/" + collectionId)` when applicable.
-- **Error cases:** `UNAUTHENTICATED`, `VALIDATION`, `NOT_FOUND` (snippet id missing or not found), `FORBIDDEN` (not owner and not collection editor/admin), `INTERNAL`.
+- **Error cases:** `UNAUTHENTICATED`, `VALIDATION`, `NOT_FOUND` (snippet id missing or not found), `FORBIDDEN` (not snippet owner), `INTERNAL`.
 - **Cross-references:** FR-10, FR-31, FR-32, FR-37; [P3] §3.2; NFR-7, NFR-24.
 
 #### 4.1.3 `deleteSnippet`
@@ -260,13 +259,12 @@ For each action: **name**, **file**, **Zod input**, **output `data`**, **auth re
 - **Zod input:** `{ id: string.cuid() }` (id only).
 - **RBAC check:**
   - `requireUser()` (step 1).
-  - If `snippet.ownerId === user.id` → allowed.
-  - Else if the snippet has a `collectionId` and the user is the collection **ADMIN** (owner OR `MembershipRole.ADMIN`) → allowed. (Collection `EDITOR` may *edit* but only owner / collection `ADMIN` may *delete* a snippet — see permission matrix §4.7.)
+  - If `snippet.ownerId === user.id` → allowed (per SRS FR-11, snippet deletion is owner-only).
   - Otherwise `FORBIDDEN`.
 - **Prisma mutation:** `prisma.snippet.delete({ where: { id } })`. Cascades `SnippetTag` rows (`onDelete: Cascade`); `collectionId` is `SetNull` so the collection is preserved (FR-12, `DM-5`, `DM-6`).
 - **Output `data`:** `{ snippetId: string }` (echo of deleted id).
-- **Revalidate triggers:** `revalidatePath("/snippets")`, `revalidatePath("/dashboard")`, and `revalidatePath("/collections/" + collectionId)` when applicable.
-- **Error cases:** `UNAUTHENTICATED`, `VALIDATION` (malformed id), `NOT_FOUND` (snippet missing), `FORBIDDEN` (not owner and not collection admin), `INTERNAL`.
+- **Revalidate triggers:** `revalidatePath("/")`, `revalidatePath("/explore")`, `revalidatePath("/snippets")`, `revalidatePath("/dashboard")`, `revalidatePath("/snippets/" + id)`, `revalidatePath("/explore/snippets/" + id)`, and `revalidatePath("/collections/" + collectionId)` / `revalidatePath("/explore/" + collectionId)` when applicable.
+- **Error cases:** `UNAUTHENTICATED`, `VALIDATION` (malformed id), `NOT_FOUND` (snippet missing), `FORBIDDEN` (not owner), `INTERNAL`.
 - **Cross-references:** FR-11, FR-12, FR-31, FR-37; [P3] §3.2; NFR-24.
 
 #### 4.1.4 `loadMore` (pagination — supplementary)
@@ -496,7 +494,7 @@ Every query that returns user-scoped data MUST be scoped by `ownerId` or a membe
 
 ### 6.3 Visibility filter for PUBLIC reads
 
-For any anonymous or public listing, filter by `visibility: "PUBLIC"` and **never** include `PRIVATE`/`TEAM` rows (FR-44, NFR-24, [P2] §2.6 `listPublicCollections`). The `canViewCollection(collectionId, userId?)` helper in `lib/rbac.ts` centralizes this: it returns `true` for `PUBLIC` even with no `userId`, and `false` for `PRIVATE`/`TEAM` when `userId` is absent ([P1] §1.6).
+For any anonymous or public listing, filter by `visibility: "PUBLIC"` and **never** include `PRIVATE`/`TEAM` rows (FR-44, NFR-24, [P2] §2.6 `listPublicCollections`). The `canViewCollection(collectionId, userId?)` helper in `lib/rbac.ts` centralizes this: it returns `true` for `PUBLIC` even with no `userId`, and `false` for `PRIVATE`/`TEAM` when `userId` is absent ([P1] §1.6). Standalone snippets (snippets without a collection or assigned to non-public collections) cannot be anonymous public routes; only snippets residing within `PUBLIC` collections are accessible anonymously via `/explore/snippets/[id]`.
 
 ### 6.4 Transactional integrity
 
@@ -549,7 +547,7 @@ The table below is the contract's summary of the SRS §3.5.2 matrix, focused on 
 |--------|:-----:|:------------:|:----------------:|:-----------:|:-----------:|:-----------:|:-----------:|
 | `createSnippet` | ❌ | ✅ | ✅* | ❌ | ✅* | ✅* | ✅ |
 | `updateSnippet` | ❌ | ✅ | ❌ | ❌ | ✅** | ✅** | ✅ |
-| `deleteSnippet` | ❌ | ✅ | ❌ | ❌ | ❌ | ✅** | ✅ |
+| `deleteSnippet` | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
 | `createCollection` | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `updateCollection` | ❌ | ✅ | ❌ | ❌ | ✅** | ✅** | ✅ |
 | `deleteCollection` | ❌ | ✅ | ❌ | ❌ | ❌ | ❌*** | ❌*** |
@@ -560,7 +558,7 @@ The table below is the contract's summary of the SRS §3.5.2 matrix, focused on 
 | `searchSnippets` (RSC) | PUBLIC only | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 \* `createSnippet` into a collection requires the caller to be owner or collection `EDITOR`/`ADMIN` for that collection (see §4.1.1).
-\*\* Collection `EDITOR`/`ADMIN` may edit snippets/collection settings; only owner / collection `ADMIN` may delete a snippet or manage membership.
+\*\* Collection `EDITOR`/`ADMIN` may edit collection settings (or snippets within collection editing rules); snippet deletion is owner-only per FR-11.
 \*\*\* Collection **owner** is treated as admin for membership management; a standalone `MembershipRole.ADMIN` member also qualifies. Global `ADMIN` is **not** auto-granted collection ownership/membership (matrix note, [SRS] §3.5.2).
 
 ---

@@ -234,7 +234,7 @@ Zone 3 (Prisma → Postgres)          ── validates: Zod-parsed input already
 - **Impact:** High (unauthorized edit/admin rights on a collection).
 - **Mitigation:** `updateMemberRole` (and all membership management) requires the **actor** to hold `MembershipRole.ADMIN` on that collection (or be the owner). `canEditCollection()` / the permission matrix enforce this; the Prisma query checks the actor's role before applying any change, and a member can never grant themselves a higher role (FR-29, AR-6, [SRS] §3.5.2 matrix: "Manage collection membership" → Owner / Member ADMIN only). (FR-29, AR-6, [SRS] §3.5.2)
 
-> **ponytail (updated — actual implementation):** `updateMemberRole` is **not** implemented in the final build (deferred/post-MVP); only `addMember`/`removeMember` exist in `actions/collections.ts`. The escalation path it describes is therefore currently moot, but the principle (membership changes require collection ADMIN) remains the designed control.
+> **Implementation note:** `updateMemberRole` is implemented in `actions/collections.ts` and requires the actor to have collection management privileges (`canManageCollectionMembers`). It explicitly rejects self-role updates (`targetUserId === user.id`) to prevent self-escalation.
 - **Residual risk:** Low.
 
 #### TM-E-02: Regular USER escalates to global ADMIN

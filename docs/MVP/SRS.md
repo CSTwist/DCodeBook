@@ -239,7 +239,7 @@ High-level capabilities (detailed as FRs in §3.2):
 - **FR-26** The system SHALL support a per-collection `Membership` entity linking `userId` + `collectionId` (unique pair) with `MembershipRole`: `VIEWER` | `EDITOR` | `ADMIN` (default `VIEWER`).
 - **FR-27** `middleware.ts` SHALL perform **cookie-presence-only** checks for protected prefixes (`/dashboard`, `/snippets/new`, `/collections`, `/admin`); it SHALL NOT perform database/role queries at the edge.
 - **FR-28** Authoritative authorization SHALL occur in RSC/Server Actions via `auth()` + `lib/rbac.ts` helpers (`requireUser`, `requireAdmin`, `canEditCollection`). A `USER` attempting `/admin` SHALL be denied (both middleware redirect and `requireAdmin` enforcement).
-- **FR-29** Editing a `TEAM` collection (or its snippets) SHALL be permitted only to the owner or a member with `MembershipRole` of `EDITOR` or `ADMIN` (`canEditCollection` logic). `VIEWER` members SHALL NOT be able to edit.
+- **FR-29** Editing `TEAM` collection metadata (name, description, visibility) SHALL be permitted to the collection owner or a member with `MembershipRole` of `EDITOR` or `ADMIN` (`canEditCollection` logic). `VIEWER` members SHALL NOT be able to edit. Per FR-10 (authoritative), updating a snippet remains strictly owner-only; collection editors/admins SHALL NOT edit another user's snippet or reassign its `collectionId`.
 - **FR-30** The system SHALL provide a permission matrix (see §3.5.2) defining allowed actions per role; implementation SHALL conform to it.
 
 #### 3.2.8 Mutations & UX
@@ -369,10 +369,10 @@ The following matrix is the authoritative statement of who can do what. "Owner" 
 | Access `/admin` | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ (unless global ADMIN) |
 | View `PUBLIC` collection & its snippets (incl. anonymous) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | View `TEAM` collection (as member) | ❌ | ❌ | ❌* | ✅ | ✅ | ✅ | ✅ (if owner) |
-| Edit `TEAM` collection / its snippets | Denied | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ (owner only) |
+| Edit `TEAM` collection details | Denied | ❌ | ✅ | ❌ | ✅ | ✅ | ✅ (owner only) |
 | Manage collection membership | Denied | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ (owner only) |
 
-\* A global `ADMIN` is not automatically a collection member; per the source docs, global `ADMIN` can edit any `TEAM` collection (matrix row "Edit TEAM collection" lists ADMIN ✅) but is not granted implicit membership and therefore **cannot** manage a collection's membership — only the collection owner or a `MembershipRole.ADMIN` member can (see `API_CONTRACT.md` §4.7, `THREAT_MODEL.md` TM-E-01, ADR-004). **\*\*`PUBLIC` collections are readable by **anyone, including unauthenticated (anonymous) users** (decided; resolves open item R-6) via `listVisibleCollections` / a public listing; `PRIVATE`/`TEAM` collections remain auth-gated (see FR-44/45/46, NFR-24, §3.5.2).
+\* A global `ADMIN` is not automatically a collection member; per the source docs, global `ADMIN` can edit any `TEAM` collection (matrix row "Edit TEAM collection details" lists ADMIN ✅) but is not granted implicit membership and therefore **cannot** manage a collection's membership — only the collection owner or a `MembershipRole.ADMIN` member can (see `API_CONTRACT.md` §4.7, `THREAT_MODEL.md` TM-E-01, ADR-004). **\*\*`PUBLIC` collections are readable by **anyone, including unauthenticated (anonymous) users** (decided; resolves open item R-6) via `listVisibleCollections` / a public listing; `PRIVATE`/`TEAM` collections remain auth-gated (see FR-44/45/46, NFR-24, §3.5.2). Standalone snippets (snippets without a collection or in non-public collections) cannot be anonymous public routes; only snippets within `PUBLIC` collections are accessible anonymously via `/explore/snippets/[id]`.
 
 - **AR-5** `requireUser()` SHALL throw `UNAUTHORIZED` if no session; `requireAdmin()` SHALL throw `FORBIDDEN` if `user.role !== ADMIN`.
 - **AR-6** `canEditCollection(collectionId, userId)` SHALL return true if the user is the collection owner OR holds `EDITOR`/`ADMIN` `MembershipRole`; otherwise false. This helper SHALL be used by RSC/Server Actions for collection-scoped edits.
