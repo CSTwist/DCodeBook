@@ -23,7 +23,7 @@ import {
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -67,10 +67,10 @@ export function CommandPalette() {
           </CommandItem>
           <CommandItem
             onSelect={() =>
-              run(() => setTheme(theme === "dark" ? "light" : "dark"))
+              run(() => setTheme(resolvedTheme === "dark" ? "light" : "dark"))
             }
           >
-            {theme === "dark" ? <Sun /> : <Moon />}
+            {resolvedTheme === "dark" ? <Sun /> : <Moon />}
             Toggle theme
           </CommandItem>
         </CommandGroup>

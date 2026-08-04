@@ -37,6 +37,10 @@ export default async function DashboardPage() {
       _count: { language: true },
       orderBy: { _count: { language: "desc" } },
     }),
+    // Phase 1: Concurrently fetch initial dashboard counts & top 8 tag IDs scoped to userId.
+    // Note: Prisma's groupBy on snippetTag is required to filter, aggregate, and order
+    // popular tags strictly by ownerId: userId (Prisma relational findMany does not support
+    // ordering by filtered relation counts across user boundaries).
     prisma.snippetTag.groupBy({
       by: ["tagId"],
       where: { snippet: { ownerId: userId } },
@@ -46,8 +50,14 @@ export default async function DashboardPage() {
     }),
   ]);
 
+  // Phase 2: Measured-safe lookup of tag names for the top-8 tag IDs.
+  // Performing this secondary lookup by primary keys (`id: { in: tagIds }`) is O(1) indexed
+  // and capped at 8 items. This avoids unindexed/expensive queries while preserving exact
+  // user owner-scoping, tag names, snippet counts, and descending popularity order.
   const tagIds = popularTagAgg.map((t: { tagId: string }) => t.tagId);
-  const tagRecords = await prisma.tag.findMany({ where: { id: { in: tagIds } } });
+  const tagRecords = tagIds.length > 0
+    ? await prisma.tag.findMany({ where: { id: { in: tagIds } } })
+    : [];
   const popularTags = popularTagAgg
     .map((agg: { tagId: string; _count: { tagId: number } }) => {
       const tag = tagRecords.find((t: { id: string; name: string }) => t.id === agg.tagId);
@@ -184,7 +194,7 @@ export default async function DashboardPage() {
                   return (
                     <Link
                       key={tag.id}
-                      href={`/snippets?tag=${encodeURIComponent(tag.name)}`}
+                      href={`/snippets?${new URLSearchParams({ tag: tag.name }).toString()}`}
                     >
                       <Badge
                         variant="secondary"

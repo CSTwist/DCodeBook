@@ -15,10 +15,18 @@ export function CodeBlock({ code, html, className }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(code);
-    setCopied(true);
-    toast.success("Copied to clipboard");
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+        throw new Error("Clipboard API unavailable");
+      }
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      toast.success("Copied to clipboard");
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy code:", err);
+      toast.error("Failed to copy to clipboard");
+    }
   }
 
   return (
@@ -26,9 +34,9 @@ export function CodeBlock({ code, html, className }: CodeBlockProps) {
       <Button
         size="icon"
         variant="ghost"
-        className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+        className="absolute top-2 right-2 z-10 size-9 sm:size-8 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 transition-opacity"
         onClick={handleCopy}
-        aria-label={copied ? "Copied" : "Copy code to clipboard"}
+        aria-label={copied ? "Copied code" : "Copy code to clipboard"}
       >
         {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
       </Button>
@@ -36,3 +44,4 @@ export function CodeBlock({ code, html, className }: CodeBlockProps) {
     </div>
   );
 }
+

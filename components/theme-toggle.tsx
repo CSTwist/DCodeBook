@@ -14,10 +14,11 @@ export function ThemeToggle() {
   // Mirror the active theme into a cookie so server components (e.g. the
   // snippet page) can resolve the correct Shiki highlight theme.
   useEffect(() => {
-    if (theme) {
-      document.cookie = `theme=${theme}; path=/; max-age=31536000; samesite=lax`;
+    const activeTheme = resolvedTheme || theme;
+    if (activeTheme) {
+      document.cookie = `theme=${activeTheme}; path=/; max-age=31536000; samesite=lax`;
     }
-  }, [theme]);
+  }, [theme, resolvedTheme]);
 
   if (!mounted) {
     return (
