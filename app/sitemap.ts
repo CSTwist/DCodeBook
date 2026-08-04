@@ -16,13 +16,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     { url: baseUrl, lastModified: new Date() },
-    { url: `${baseUrl}/sign-in`, lastModified: new Date() },
+    { url: `${baseUrl}/explore`, lastModified: new Date() },
     ...publicCollections.map((c) => ({
-      url: `${baseUrl}/collections/${c.id}`,
+      url: `${baseUrl}/explore/${c.id}`,
       lastModified: c.updatedAt,
     })),
     ...publicSnippets.map((s) => ({
-      url: `${baseUrl}/snippets/${s.id}`,
+      url: `${baseUrl}/explore/snippets/${s.id}`,
       lastModified: s.updatedAt,
     })),
   ];

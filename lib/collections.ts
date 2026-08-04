@@ -14,7 +14,7 @@ export async function listVisibleCollections(userId: string) {
   });
 }
 
-export async function listPublicCollections() {
+export async function listPublicCollections(take = 20) {
   return prisma.collection.findMany({
     where: { visibility: "PUBLIC" },
     include: {
@@ -22,6 +22,6 @@ export async function listPublicCollections() {
       owner: { select: { name: true, image: true } },
     },
     orderBy: { updatedAt: "desc" },
-    take: 20,
+    take,
   });
 }
