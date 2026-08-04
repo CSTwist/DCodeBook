@@ -1,6 +1,5 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Code2, Mail } from "lucide-react";
@@ -11,9 +10,7 @@ interface SignInButtonsProps {
 }
 
 export function SignInButtons({ callbackUrl }: SignInButtonsProps = {}) {
-  const searchParams = useSearchParams();
-  const rawUrl = callbackUrl ?? searchParams.get("callbackUrl");
-  const safeUrl = getSafeCallbackUrl(rawUrl);
+  const safeUrl = getSafeCallbackUrl(callbackUrl);
 
   return (
     <div className="flex flex-col gap-3">

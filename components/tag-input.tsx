@@ -10,6 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { mergeProps } from "@base-ui/react/merge-props";
 
 interface TagInputProps {
   id?: string;
@@ -145,20 +146,21 @@ export function TagInput({
         <PopoverTrigger
           render={(props) => (
             <Input
-              {...props}
-              id={inputId}
-              role="combobox"
-              aria-autocomplete="list"
-              aria-expanded={open}
-              aria-controls={listboxId}
-              aria-activedescendant={activeOptionId}
-              aria-invalid={ariaInvalid}
-              aria-describedby={ariaDescribedBy}
-              value={inputValue}
-              onChange={handleChange}
-              onKeyDown={handleKeyDown}
-              onFocus={() => setOpen(true)}
-              placeholder="Add tags... (press Enter or comma)"
+              {...mergeProps(props, {
+                id: inputId,
+                role: "combobox",
+                "aria-autocomplete": "list",
+                "aria-expanded": open,
+                "aria-controls": listboxId,
+                "aria-activedescendant": activeOptionId,
+                "aria-invalid": ariaInvalid,
+                "aria-describedby": ariaDescribedBy,
+                value: inputValue,
+                onChange: handleChange,
+                onKeyDown: handleKeyDown,
+                onFocus: () => setOpen(true),
+                placeholder: "Add tags... (press Enter or comma)",
+              })}
             />
           )}
         />
