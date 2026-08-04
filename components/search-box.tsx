@@ -13,10 +13,14 @@ import {
 export function SearchBox() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialQ = searchParams.get("q") ?? "";
-  const [value, setValue] = useState(initialQ);
+  const urlQ = searchParams.get("q") ?? "";
+  const [value, setValue] = useState(urlQ);
   const [isPending, startTransition] = useTransition();
-  const isFirst = useRef(true);
+
+  // Sync local state with URL query parameter on back/forward navigation or external URL change
+  useEffect(() => {
+    setValue(urlQ);
+  }, [urlQ]);
 
   // Keep a ref to the latest searchParams so the debounce effect only
   // re-runs when the input value actually changes (avoids navigation loops).
@@ -24,8 +28,8 @@ export function SearchBox() {
   searchParamsRef.current = searchParams;
 
   useEffect(() => {
-    if (isFirst.current) {
-      isFirst.current = false;
+    // If local value matches URL q parameter, skip redundant replacement
+    if (value === (searchParamsRef.current.get("q") ?? "")) {
       return;
     }
     const handle = setTimeout(() => {
@@ -37,9 +41,9 @@ export function SearchBox() {
       }
       // Reset pagination when the query changes.
       params.delete("page");
-      params.delete("loadMore");
       startTransition(() => {
-        router.replace(`/snippets?${params.toString()}`);
+        const queryStr = params.toString();
+        router.replace(queryStr ? `/snippets?${queryStr}` : "/snippets");
       });
     }, 300);
     return () => clearTimeout(handle);
@@ -51,6 +55,7 @@ export function SearchBox() {
         <Search className="h-4 w-4" />
       </InputGroupAddon>
       <InputGroupInput
+        id="search-input"
         aria-label="Search snippets"
         placeholder="Search snippets, code, tags…"
         value={value}

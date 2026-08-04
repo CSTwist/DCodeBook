@@ -10,7 +10,9 @@ function isTypingTarget(target: EventTarget | null): boolean {
     tag === "INPUT" ||
     tag === "TEXTAREA" ||
     tag === "SELECT" ||
-    target.isContentEditable
+    target.isContentEditable ||
+    target.getAttribute("role") === "textbox" ||
+    target.closest(".monaco-editor, .cm-editor, .code-editor, [contenteditable='true'], [role='textbox']") !== null
   );
 }
 
@@ -36,6 +38,8 @@ export function useKeyboardShortcuts() {
     const down = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
+      if (isTypingTarget(e.target)) return;
+
       if (e.key === "?") {
         e.preventDefault();
         setHelpOpen((prev) => !prev);
@@ -43,7 +47,6 @@ export function useKeyboardShortcuts() {
       }
 
       if (helpOpenRef.current) return;
-      if (isTypingTarget(e.target)) return;
 
       if (e.key === "/") {
         e.preventDefault();

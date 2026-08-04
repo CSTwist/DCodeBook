@@ -40,7 +40,6 @@ export function SnippetFilters({
     }
     // Reset pagination when filters change.
     params.delete("page");
-    params.delete("loadMore");
     const qs = params.toString();
     return `/snippets${qs ? `?${qs}` : ""}`;
   }

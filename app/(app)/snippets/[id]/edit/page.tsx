@@ -21,7 +21,20 @@ export default async function EditSnippetPage({ params }: Props) {
   if (!snippet || snippet.ownerId !== session.user.id) notFound();
 
   const collections = await prisma.collection.findMany({
-    where: { ownerId: session.user.id },
+    where: {
+      OR: [
+        { ownerId: session.user.id },
+        {
+          visibility: "TEAM",
+          memberships: {
+            some: {
+              userId: session.user.id,
+              role: { in: ["EDITOR", "ADMIN"] },
+            },
+          },
+        },
+      ],
+    },
     select: { id: true, name: true },
   });
   const allTags = await getPopularTags(session.user.id);

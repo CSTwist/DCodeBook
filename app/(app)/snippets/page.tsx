@@ -18,7 +18,6 @@ interface Props {
     page?: string;
     sort?: string;
     language?: string;
-    loadMore?: string;
   }>;
 }
 
@@ -26,14 +25,13 @@ export default async function SnippetsPage({ searchParams }: Props) {
   const session = await auth();
   if (!session?.user) return null;
 
-  const { q, tag, page, sort, language, loadMore } = await searchParams;
+  const { q, tag, page, sort, language } = await searchParams;
   const userId = session.user.id;
 
   const currentPage = Math.max(1, parseInt(page || "1", 10) || 1);
   const pageSize = 12;
-  const loadMoreCount = Math.max(1, parseInt(loadMore || "1", 10) || 1);
   const skip = (currentPage - 1) * pageSize;
-  const take = pageSize * loadMoreCount;
+  const take = pageSize;
 
   const orderBy =
     sort === "updated_asc"
@@ -65,16 +63,12 @@ export default async function SnippetsPage({ searchParams }: Props) {
       : {}),
   };
 
-  const languageGroups = await prisma.snippet.groupBy({
-    by: ["language"],
-    where: { ownerId: userId },
-    orderBy: { _count: { language: "desc" } },
-  });
-  const languages = languageGroups
-    .map((g: { language: string }) => g.language)
-    .filter((l: unknown): l is string => Boolean(l));
-
-  const [totalSnippets, snippets, tags] = await Promise.all([
+  const [languageGroups, totalSnippets, snippets, tags] = await Promise.all([
+    prisma.snippet.groupBy({
+      by: ["language"],
+      where: { ownerId: userId },
+      orderBy: { _count: { language: "desc" } },
+    }),
     prisma.snippet.count({ where: whereClause }),
     prisma.snippet.findMany({
       where: whereClause,
@@ -83,7 +77,6 @@ export default async function SnippetsPage({ searchParams }: Props) {
         title: true,
         description: true,
         language: true,
-        code: true,
         ownerId: true,
         tags: { include: { tag: true } },
       },
@@ -93,6 +86,10 @@ export default async function SnippetsPage({ searchParams }: Props) {
     }),
     getPopularTags(userId),
   ]);
+
+  const languages = languageGroups
+    .map((g: { language: string }) => g.language)
+    .filter((l: unknown): l is string => Boolean(l));
 
   const totalPages = Math.ceil(totalSnippets / pageSize);
 
@@ -107,14 +104,12 @@ export default async function SnippetsPage({ searchParams }: Props) {
     return `/snippets${queryString ? `?${queryString}` : ""}`;
   }
 
-  function getLoadMoreUrl() {
+  function getTagUrl(tagName?: string) {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
-    if (tag) params.set("tag", tag);
+    if (tagName) params.set("tag", tagName);
     if (sort && sort !== "updated_desc") params.set("sort", sort);
     if (language) params.set("language", language);
-    if (page && page !== "1") params.set("page", page);
-    params.set("loadMore", String(loadMoreCount + 1));
     const queryString = params.toString();
     return `/snippets${queryString ? `?${queryString}` : ""}`;
   }
@@ -141,14 +136,14 @@ export default async function SnippetsPage({ searchParams }: Props) {
         {tags.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
             {tags.map((t) => (
-              <Link key={t.id} href={`/snippets?tag=${t.name}`}>
+              <Link key={t.id} href={getTagUrl(t.name)}>
                 <Badge variant={tag === t.name ? "default" : "secondary"}>
                   {t.name}
                 </Badge>
               </Link>
             ))}
             {tag && (
-              <Link href="/snippets">
+              <Link href={getTagUrl(undefined)}>
                 <Badge variant="outline">Clear</Badge>
               </Link>
             )}
@@ -177,7 +172,7 @@ export default async function SnippetsPage({ searchParams }: Props) {
       ) : (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {snippets.map((snippet: { id: string; title: string; language: string; description: string | null; code: string | null; ownerId: string; tags: Array<{ tag: { id: string; name: string } }> }) => (
+            {snippets.map((snippet: { id: string; title: string; language: string; description: string | null; ownerId: string; tags: Array<{ tag: { id: string; name: string } }> }) => (
               <div key={snippet.id} className="relative group">
                 <Link href={`/snippets/${snippet.id}`} className="block h-full">
                   <Card className="h-full transition-colors hover:bg-muted/50">
@@ -199,11 +194,6 @@ export default async function SnippetsPage({ searchParams }: Props) {
                             </Badge>
                           ))}
                         </div>
-                      )}
-                      {snippet.code && snippet.code.trim().length > 0 && (
-                        <pre className="mt-2 overflow-hidden rounded bg-muted p-2 text-xs text-muted-foreground line-clamp-3">
-                          {snippet.code.slice(0, 200)}
-                        </pre>
                       )}
                     </CardContent>
                   </Card>
@@ -260,18 +250,6 @@ export default async function SnippetsPage({ searchParams }: Props) {
                   </Button>
                 )}
               </div>
-            </div>
-          )}
-
-          {totalSnippets > skip + take && (
-            <div className="flex justify-center border-t pt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                render={<Link href={getLoadMoreUrl()} />}
-              >
-                Load more
-              </Button>
             </div>
           )}
         </>

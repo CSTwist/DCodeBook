@@ -13,9 +13,25 @@ export default async function NewSnippetPage({
   if (!session?.user) redirect("/sign-in");
   const { collectionId } = await searchParams;
   const collections = await prisma.collection.findMany({
-    where: { ownerId: session.user.id },
+    where: {
+      OR: [
+        { ownerId: session.user.id },
+        {
+          visibility: "TEAM",
+          memberships: {
+            some: {
+              userId: session.user.id,
+              role: { in: ["EDITOR", "ADMIN"] },
+            },
+          },
+        },
+      ],
+    },
     select: { id: true, name: true },
   });
+  const defaultCollectionId = collections.some((c) => c.id === collectionId)
+    ? collectionId
+    : undefined;
   const allTags = await getPopularTags(session.user.id);
   return (
     <div className="max-w-3xl mx-auto">
@@ -23,7 +39,7 @@ export default async function NewSnippetPage({
       <SnippetForm
         collections={collections}
         allTags={allTags}
-        defaultCollectionId={collectionId}
+        defaultCollectionId={defaultCollectionId}
       />
     </div>
   );
