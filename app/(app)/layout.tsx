@@ -8,7 +8,6 @@ import { CommandPalette } from "@/components/command-palette";
 import { KeyboardProvider } from "@/components/keyboard-provider";
 import { UserMenu } from "@/components/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Toaster } from "@/components/ui/sonner";
 import { BookOpen } from "lucide-react";
 import Link from "next/link";
 
@@ -54,7 +53,6 @@ export default async function AppLayout({
       </div>
       <CommandPalette />
       <KeyboardProvider />
-      <Toaster />
     </div>
   );
 }
