@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { getSafeCallbackUrl } from "@/lib/utils";
 import { Sidebar } from "@/components/sidebar";
 import { MobileNav } from "@/components/mobile-nav";
 import { CommandPalette } from "@/components/command-palette";
@@ -16,7 +18,16 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-  if (!session?.user) redirect("/sign-in");
+  if (!session?.user) {
+    const headerList = await headers();
+    const currentPath =
+      headerList.get("x-pathname") || headerList.get("next-url") || "";
+    const safeCallback = getSafeCallbackUrl(currentPath);
+    if (safeCallback && safeCallback !== "/dashboard") {
+      redirect(`/sign-in?callbackUrl=${encodeURIComponent(safeCallback)}`);
+    }
+    redirect("/sign-in");
+  }
 
   return (
     <div className="flex min-h-screen">

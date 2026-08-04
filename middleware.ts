@@ -13,7 +13,8 @@ const PROTECTED_PREFIXES = ["/dashboard", "/snippets/new", "/collections"];
 const ADMIN_PREFIXES = ["/admin"];
 
 export function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
+  const { pathname, search } = req.nextUrl;
+  const fullPath = pathname + search;
   const sessionCookie =
     req.cookies.get("authjs.session-token") ??
     req.cookies.get("__Secure-authjs.session-token");
@@ -23,11 +24,17 @@ export function middleware(req: NextRequest) {
 
   if ((isProtected || isAdmin) && !sessionCookie) {
     const url = new URL("/sign-in", req.url);
-    url.searchParams.set("callbackUrl", pathname);
+    url.searchParams.set("callbackUrl", fullPath);
     return NextResponse.redirect(url);
   }
 
-  return NextResponse.next();
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", fullPath);
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 export const config = {

@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser, canEditCollection } from "@/lib/rbac";
+import { requireUser, canEditCollection, canManageCollectionMembers } from "@/lib/rbac";
 import { collectionSchema, memberSchema } from "@/lib/validations";
 import { revalidatePath } from "next/cache";
 
@@ -68,8 +68,11 @@ export async function deleteCollection(id: string) {
 
 export async function addMember(collectionId: string, formData: FormData) {
   const user = await requireUser();
-  const canEdit = await canEditCollection(collectionId, user.id);
-  if (!canEdit) return { error: "FORBIDDEN" as const };
+  const collection = await prisma.collection.findUnique({ where: { id: collectionId } });
+  if (!collection) return { error: "NOT_FOUND" as const };
+
+  const canManage = await canManageCollectionMembers(collectionId, user.id);
+  if (!canManage) return { error: "FORBIDDEN" as const };
 
   const email = formData.get("email");
   const role = formData.get("role");
@@ -78,6 +81,10 @@ export async function addMember(collectionId: string, formData: FormData) {
 
   const target = await prisma.user.findUnique({ where: { email } });
   if (!target) return { error: "User not found" };
+
+  if (target.id === collection.ownerId) {
+    return { error: "Collection owner is already a member" };
+  }
 
   const parsed = memberSchema.safeParse({ userId: target.id, role });
   if (!parsed.success) {
@@ -94,12 +101,74 @@ export async function addMember(collectionId: string, formData: FormData) {
   return { success: true as const };
 }
 
+export async function updateMemberRole(
+  collectionId: string,
+  targetUserId: string,
+  role: string
+) {
+  const user = await requireUser();
+  const collection = await prisma.collection.findUnique({ where: { id: collectionId } });
+  if (!collection) return { error: "NOT_FOUND" as const };
+
+  const canManage = await canManageCollectionMembers(collectionId, user.id);
+  if (!canManage) return { error: "FORBIDDEN" as const };
+
+  if (targetUserId === collection.ownerId) {
+    return { error: "Cannot modify collection owner role" };
+  }
+
+  if (targetUserId === user.id) {
+    return { error: "Cannot modify your own role" };
+  }
+
+  const existingMembership = await prisma.membership.findUnique({
+    where: { userId_collectionId: { userId: targetUserId, collectionId } },
+  });
+  if (!existingMembership) {
+    return { error: "Member not found" };
+  }
+
+  const parsed = memberSchema.safeParse({ userId: targetUserId, role });
+  if (!parsed.success) {
+    return { error: parsed.error.flatten().fieldErrors as unknown as FieldErrors };
+  }
+
+  await prisma.membership.update({
+    where: { userId_collectionId: { userId: targetUserId, collectionId } },
+    data: { role: parsed.data.role },
+  });
+
+  revalidatePath(`/collections/${collectionId}`);
+  return { success: true as const };
+}
+
 export async function removeMember(collectionId: string, userId: string) {
   const user = await requireUser();
-  const canEdit = await canEditCollection(collectionId, user.id);
-  if (!canEdit) return { error: "FORBIDDEN" as const };
+  const collection = await prisma.collection.findUnique({ where: { id: collectionId } });
+  if (!collection) return { error: "NOT_FOUND" as const };
 
-  await prisma.membership.deleteMany({ where: { collectionId, userId } });
+  const canManage = await canManageCollectionMembers(collectionId, user.id);
+  if (!canManage) return { error: "FORBIDDEN" as const };
+
+  if (userId === collection.ownerId) {
+    return { error: "Cannot remove collection owner" };
+  }
+
+  if (userId === user.id) {
+    return { error: "Cannot remove yourself" };
+  }
+
+  const existingMembership = await prisma.membership.findUnique({
+    where: { userId_collectionId: { userId, collectionId } },
+  });
+  if (!existingMembership) {
+    return { error: "Member not found" };
+  }
+
+  await prisma.membership.delete({
+    where: { userId_collectionId: { userId, collectionId } },
+  });
+
   revalidatePath(`/collections/${collectionId}`);
   return { success: true as const };
 }

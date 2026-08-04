@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/rbac";
+import { requireUser, canEditCollection } from "@/lib/rbac";
 import { snippetSchema } from "@/lib/validations";
 import { revalidatePath } from "next/cache";
 
@@ -32,6 +32,13 @@ export async function createSnippet(formData: FormData) {
   }
   const { title, description, code, language, tagNames, collectionId } = parsed.data;
 
+  if (collectionId) {
+    const canEdit = await canEditCollection(collectionId, user.id);
+    if (!canEdit) {
+      return { error: { collectionId: ["Unauthorized or collection does not exist"] } as unknown as FieldErrors };
+    }
+  }
+
   const snippet = await prisma.snippet.create({
     data: {
       title,
@@ -57,13 +64,24 @@ export async function updateSnippet(id: string, formData: FormData) {
   const user = await requireUser();
   const existing = await prisma.snippet.findUnique({ where: { id } });
   if (!existing) return { error: "NOT_FOUND" as const };
-  if (existing.ownerId !== user.id) return { error: "FORBIDDEN" as const };
+  const canEditExisting =
+    existing.ownerId === user.id ||
+    (existing.collectionId !== null &&
+      (await canEditCollection(existing.collectionId, user.id)));
+  if (!canEditExisting) return { error: "FORBIDDEN" as const };
 
   const parsed = snippetSchema.safeParse(parseSnippetForm(formData));
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors as unknown as FieldErrors };
   }
   const { title, description, code, language, tagNames, collectionId } = parsed.data;
+
+  if (collectionId) {
+    const canEdit = await canEditCollection(collectionId, user.id);
+    if (!canEdit) {
+      return { error: { collectionId: ["Unauthorized or collection does not exist"] } as unknown as FieldErrors };
+    }
+  }
 
   await prisma.snippet.update({
     where: { id },

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { SignInButtons } from "@/components/sign-in-buttons";
+import { getSafeCallbackUrl } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -16,9 +17,16 @@ const features = [
   { icon: Users, label: "Team collections" },
 ];
 
-export default async function SignInPage() {
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ callbackUrl?: string }>;
+}) {
+  const params = await searchParams;
+  const safeCallbackUrl = getSafeCallbackUrl(params?.callbackUrl);
+
   const session = await auth();
-  if (session?.user) redirect("/dashboard");
+  if (session?.user) redirect(safeCallbackUrl);
 
   return (
     <main className="flex min-h-screen">
@@ -88,7 +96,7 @@ const snippet = await db.snippet.create({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <SignInButtons />
+            <SignInButtons callbackUrl={safeCallbackUrl} />
           </CardContent>
         </Card>
       </section>
