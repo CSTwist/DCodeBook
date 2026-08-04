@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { highlight } from "@/lib/highlight";
 import { VisibilityBadge } from "@/components/visibility-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -58,7 +56,13 @@ export default async function ExploreCollectionPage({ params, searchParams }: Pr
       owner: { select: { name: true, image: true } },
       _count: { select: { snippets: true } },
       snippets: {
-        include: { tags: { include: { tag: true } } },
+        select: {
+          id: true,
+          title: true,
+          language: true,
+          description: true,
+          tags: { select: { tag: { select: { id: true, name: true } } } },
+        },
         orderBy: { updatedAt: "desc" },
         take: PAGE_SIZE,
         skip: (page - 1) * PAGE_SIZE,
@@ -70,17 +74,6 @@ export default async function ExploreCollectionPage({ params, searchParams }: Pr
 
   const totalSnippets = collection._count.snippets;
   const totalPages = Math.ceil(totalSnippets / PAGE_SIZE) || 1;
-
-  const cookieStore = await cookies();
-  const themeCookie = cookieStore.get("theme")?.value;
-  const dark = themeCookie === "dark";
-
-  const previews = await Promise.all(
-    collection.snippets.map(async (snippet: { id: string; title: string; code: string; language: string; description: string | null; tags: Array<{ tag: { id: string; name: string } }> }) => ({
-      snippet,
-      html: await highlight(snippet.code.slice(0, 500), snippet.language, dark),
-    }))
-  );
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-background to-muted/30">
@@ -134,7 +127,7 @@ export default async function ExploreCollectionPage({ params, searchParams }: Pr
             </Card>
           ) : (
             <>
-              {previews.map(({ snippet, html }) => (
+              {collection.snippets.map((snippet) => (
                 <Card key={snippet.id}>
                   <CardHeader>
                     <div className="flex items-start justify-between gap-2">
@@ -159,20 +152,13 @@ export default async function ExploreCollectionPage({ params, searchParams }: Pr
                     )}
                   </CardHeader>
                   <CardContent>
-                    <div
-                      className="overflow-hidden rounded-lg text-sm [&_pre]:overflow-x-auto [&_pre]:p-3"
-                      dangerouslySetInnerHTML={{ __html: html }}
-                    />
-                    <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>
-                        Showing preview.{" "}
-                        <Link
-                          href={`/explore/snippets/${snippet.id}`}
-                          className="text-primary underline-offset-4 hover:underline font-medium"
-                        >
-                          View full snippet
-                        </Link>
-                      </span>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <Link
+                        href={`/explore/snippets/${snippet.id}`}
+                        className="text-primary underline-offset-4 hover:underline font-medium"
+                      >
+                        View full snippet
+                      </Link>
                       <Link
                         href="/sign-in"
                         className="text-primary underline-offset-4 hover:underline"

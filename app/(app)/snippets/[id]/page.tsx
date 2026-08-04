@@ -15,20 +15,28 @@ interface Props { params: Promise<{ id: string }> }
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const session = await auth();
   const { id } = await params;
-  const snippet = await prisma.snippet.findUnique({
-    where: { id },
-    select: { title: true, description: true, ownerId: true, collectionId: true },
+  const userId = session?.user?.id;
+
+  const snippet = await prisma.snippet.findFirst({
+    where: {
+      id,
+      ...(userId
+        ? {
+            OR: [
+              { collection: { visibility: "PUBLIC" } },
+              { ownerId: userId },
+              { collection: { ownerId: userId } },
+              { collection: { memberships: { some: { userId } } } },
+            ],
+          }
+        : {
+            collection: { visibility: "PUBLIC" },
+          }),
+    },
+    select: { title: true, description: true },
   });
+
   if (!snippet) return { title: "Snippet not found" };
-
-  let canView = false;
-  if (snippet.collectionId) {
-    canView = await canViewCollection(snippet.collectionId, session?.user?.id);
-  } else {
-    canView = Boolean(session?.user?.id && snippet.ownerId === session.user.id);
-  }
-
-  if (!canView) return { title: "Snippet not found" };
 
   return {
     title: snippet.title,

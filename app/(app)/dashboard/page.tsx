@@ -22,7 +22,21 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     prisma.snippet.findMany({
       where: { ownerId: userId },
-      include: { tags: { include: { tag: true } } },
+      select: {
+        id: true,
+        title: true,
+        language: true,
+        tags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
       orderBy: { updatedAt: "desc" },
       take: 5,
     }),

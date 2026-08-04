@@ -24,12 +24,21 @@ export async function createCollection(formData: FormData) {
   }
   const { name, description, visibility } = parsed.data;
 
-  const collection = await prisma.collection.create({
-    data: { name, description, visibility, ownerId: user.id },
-  });
+  try {
+    const collection = await prisma.collection.create({
+      data: { name, description, visibility, ownerId: user.id },
+    });
 
-  revalidatePath("/collections");
-  return { collectionId: collection.id };
+    revalidatePath("/");
+    revalidatePath("/explore");
+    revalidatePath("/collections");
+    revalidatePath("/dashboard");
+    revalidatePath("/sitemap.xml");
+    return { collectionId: collection.id };
+  } catch (err) {
+    console.error("createCollection error:", err);
+    return { error: "INTERNAL" as const };
+  }
 }
 
 export async function updateCollection(id: string, formData: FormData) {
@@ -45,14 +54,24 @@ export async function updateCollection(id: string, formData: FormData) {
   }
   const { name, description, visibility } = parsed.data;
 
-  await prisma.collection.update({
-    where: { id },
-    data: { name, description, visibility },
-  });
+  try {
+    await prisma.collection.update({
+      where: { id },
+      data: { name, description, visibility },
+    });
 
-  revalidatePath("/collections");
-  revalidatePath(`/collections/${id}`);
-  return { success: true as const };
+    revalidatePath("/");
+    revalidatePath("/explore");
+    revalidatePath("/dashboard");
+    revalidatePath("/collections");
+    revalidatePath("/sitemap.xml");
+    revalidatePath(`/collections/${id}`);
+    revalidatePath(`/explore/${id}`);
+    return { success: true as const };
+  } catch (err) {
+    console.error("updateCollection error:", err);
+    return { error: "INTERNAL" as const };
+  }
 }
 
 export async function deleteCollection(id: string) {
@@ -61,9 +80,21 @@ export async function deleteCollection(id: string) {
   if (!existing) return { error: "NOT_FOUND" as const };
   if (existing.ownerId !== user.id) return { error: "FORBIDDEN" as const };
 
-  await prisma.collection.delete({ where: { id } });
-  revalidatePath("/collections");
-  return { success: true as const };
+  try {
+    await prisma.collection.delete({ where: { id } });
+
+    revalidatePath("/");
+    revalidatePath("/explore");
+    revalidatePath("/dashboard");
+    revalidatePath("/collections");
+    revalidatePath("/sitemap.xml");
+    revalidatePath(`/collections/${id}`);
+    revalidatePath(`/explore/${id}`);
+    return { success: true as const };
+  } catch (err) {
+    console.error("deleteCollection error:", err);
+    return { error: "INTERNAL" as const };
+  }
 }
 
 export async function addMember(collectionId: string, formData: FormData) {
@@ -91,14 +122,22 @@ export async function addMember(collectionId: string, formData: FormData) {
     return { error: parsed.error.flatten().fieldErrors as unknown as FieldErrors };
   }
 
-  await prisma.membership.upsert({
-    where: { userId_collectionId: { userId: target.id, collectionId } },
-    update: { role: parsed.data.role },
-    create: { userId: target.id, collectionId, role: parsed.data.role },
-  });
+  try {
+    await prisma.membership.upsert({
+      where: { userId_collectionId: { userId: target.id, collectionId } },
+      update: { role: parsed.data.role },
+      create: { userId: target.id, collectionId, role: parsed.data.role },
+    });
 
-  revalidatePath(`/collections/${collectionId}`);
-  return { success: true as const };
+    revalidatePath("/");
+    revalidatePath("/explore");
+    revalidatePath(`/collections/${collectionId}`);
+    revalidatePath(`/explore/${collectionId}`);
+    return { success: true as const };
+  } catch (err) {
+    console.error("addMember error:", err);
+    return { error: "INTERNAL" as const };
+  }
 }
 
 export async function updateMemberRole(
@@ -133,13 +172,21 @@ export async function updateMemberRole(
     return { error: parsed.error.flatten().fieldErrors as unknown as FieldErrors };
   }
 
-  await prisma.membership.update({
-    where: { userId_collectionId: { userId: targetUserId, collectionId } },
-    data: { role: parsed.data.role },
-  });
+  try {
+    await prisma.membership.update({
+      where: { userId_collectionId: { userId: targetUserId, collectionId } },
+      data: { role: parsed.data.role },
+    });
 
-  revalidatePath(`/collections/${collectionId}`);
-  return { success: true as const };
+    revalidatePath("/");
+    revalidatePath("/explore");
+    revalidatePath(`/collections/${collectionId}`);
+    revalidatePath(`/explore/${collectionId}`);
+    return { success: true as const };
+  } catch (err) {
+    console.error("updateMemberRole error:", err);
+    return { error: "INTERNAL" as const };
+  }
 }
 
 export async function removeMember(collectionId: string, userId: string) {
@@ -165,10 +212,19 @@ export async function removeMember(collectionId: string, userId: string) {
     return { error: "Member not found" };
   }
 
-  await prisma.membership.delete({
-    where: { userId_collectionId: { userId, collectionId } },
-  });
+  try {
+    await prisma.membership.delete({
+      where: { userId_collectionId: { userId, collectionId } },
+    });
 
-  revalidatePath(`/collections/${collectionId}`);
-  return { success: true as const };
+    revalidatePath("/");
+    revalidatePath("/explore");
+    revalidatePath(`/collections/${collectionId}`);
+    revalidatePath(`/explore/${collectionId}`);
+    return { success: true as const };
+  } catch (err) {
+    console.error("removeMember error:", err);
+    return { error: "INTERNAL" as const };
+  }
 }
+

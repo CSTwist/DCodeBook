@@ -20,6 +20,10 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
+  const session = await auth();
+  const canView = await canViewCollection(id, session?.user?.id);
+  if (!canView) return { title: "Collection not found" };
+
   const collection = await prisma.collection.findUnique({ where: { id } });
   if (!collection) return { title: "Collection not found" };
   return {
@@ -46,7 +50,13 @@ export default async function CollectionPage({ params }: Props) {
     include: {
       owner: { select: { name: true, image: true } },
       snippets: {
-        include: { tags: { include: { tag: true } } },
+        select: {
+          id: true,
+          title: true,
+          language: true,
+          description: true,
+          tags: { select: { tag: { select: { id: true, name: true } } } },
+        },
         orderBy: { updatedAt: "desc" },
       },
       memberships: {
