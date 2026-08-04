@@ -10,6 +10,7 @@ This directory records significant architectural decisions for DCodeBook.
 | [ADR-004](./ADR-004-promote-membership-role-to-enum.md) | Promote Membership.role to MembershipRole enum | Accepted | 2026-07-30 |
 | [ADR-005](./ADR-005-allow-anonymous-public-collection-read.md) | Allow anonymous read of PUBLIC collections | Accepted | 2026-07-30 |
 | [ADR-006](./ADR-006-middleware-cookie-presence-check-only.md) | Middleware cookie-presence check only | Accepted | 2026-07-30 |
+| [ADR-007](./ADR-007-add-marketing-landing-page.md) | Add a SaaS-style marketing landing page at `/` | Accepted | 2026-08-04 |
 
 ## Principles
 
